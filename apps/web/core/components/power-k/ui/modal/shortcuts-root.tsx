@@ -86,12 +86,7 @@ export function ShortcutsModal(props: Props) {
                     </div>
                   </div>
 
-                  <ScrollArea
-                    scrollType="always"
-                    orientation="vertical"
-                    size="sm"
-                    className="size-full grow overflow-y-scroll px-5"
-                  >
+                  <ScrollArea size="sm" rootClassName="overflow-y-scroll px-5">
                     <ShortcutRenderer searchQuery={query} commands={allCommandsWithShortcuts} />
                   </ScrollArea>
                 </div>
