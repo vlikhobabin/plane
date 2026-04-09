@@ -76,6 +76,7 @@ from .workspace import (
     WorkspaceHomePreference,
     WorkspaceUserPreference,
 )
+from .worklog import IssueWorkLog
 
 from .favorite import UserFavorite
 

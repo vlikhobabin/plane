@@ -153,6 +153,13 @@ from .issue.sub_issue import SubIssuesEndpoint
 from .issue.subscriber import IssueSubscriberViewSet
 
 from .issue.version import IssueVersionEndpoint, WorkItemDescriptionVersionEndpoint
+from .issue.worklog import (
+    IssueTimeSummaryEndpoint,
+    IssueWorklogDetailEndpoint,
+    IssueWorklogEndpoint,
+    ProjectTimeReportEndpoint,
+    ResolveIssueIdentifierEndpoint,
+)
 
 from .module.base import (
     ModuleViewSet,

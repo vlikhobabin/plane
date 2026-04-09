@@ -31,6 +31,10 @@ from plane.app.views import (
     WorkItemDescriptionVersionEndpoint,
     IssueMetaEndpoint,
     IssueDetailIdentifierEndpoint,
+    IssueWorklogEndpoint,
+    IssueWorklogDetailEndpoint,
+    IssueTimeSummaryEndpoint,
+    ProjectTimeReportEndpoint,
 )
 
 urlpatterns = [
@@ -169,6 +173,26 @@ urlpatterns = [
             }
         ),
         name="project-issue-comment",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/issues/<uuid:issue_id>/worklogs/",
+        IssueWorklogEndpoint.as_view(),
+        name="project-issue-worklogs",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/issues/<uuid:issue_id>/worklogs/<uuid:worklog_id>/",
+        IssueWorklogDetailEndpoint.as_view(),
+        name="project-issue-worklog-detail",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/issues/<uuid:issue_id>/time-summary/",
+        IssueTimeSummaryEndpoint.as_view(),
+        name="project-issue-time-summary",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/time-report/",
+        ProjectTimeReportEndpoint.as_view(),
+        name="project-time-report",
     ),
     ## End IssueComments
     # Issue Subscribers
