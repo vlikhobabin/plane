@@ -117,6 +117,18 @@ make dev-space
 make dev-live
 ```
 
+For the individual frontend targets, the `Makefile` first builds the required workspace packages and then starts the selected app directly. This is the recommended path for day-to-day work because it avoids the flaky behavior we saw from running multiple separate `turbo dev` sessions that share `packages/*/dist`.
+
+You can override ports when the host already uses Plane's defaults:
+
+```bash
+make dev-api API_PORT=8010
+make dev-web WEB_PORT=3005
+make dev-admin ADMIN_PORT=3101
+make dev-space SPACE_PORT=3002
+make dev-live LIVE_PORT=3110
+```
+
 Default local URLs:
 
 - API: `http://127.0.0.1:8000`
@@ -129,6 +141,7 @@ Default local URLs:
 
 - Existing `.env` files are not overwritten by `make dev-env`.
 - Frontend `.env.example` files already point to localhost and are reused as-is.
+- `make dev-frontends` still runs the full turbo dev graph and expects the default frontend ports to be free. Use the per-app targets above when the host already has services on `3000` or when you only need one frontend.
 - Celery must run with `DJANGO_SETTINGS_MODULE=plane.settings.local`; the `Makefile` targets already handle that.
 - MinIO is kept in the local infra profile because Plane uses S3-compatible object storage for uploads and file assets. If you do not need uploads, you can stop using MinIO later, but the default host-run path keeps it enabled for parity.
 - Upstream `setup.sh` and `docker-compose-local.yml` are left intact for traceability. The fork-specific host-run workflow should use the files documented here instead.

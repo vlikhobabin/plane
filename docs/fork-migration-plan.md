@@ -106,13 +106,20 @@ Implemented in the fork:
 - local `.env` strategy inside the monorepo
 - infrastructure-only Docker Compose file
 - host-run commands for Django, Celery, and frontend apps
+- per-app frontend prebuild workflow and port overrides for occupied local ports
 - local workflow documentation in `docs/local-dev.md`
 
 Still pending:
 
-- smoke-test the host-run workflow against the dev database
 - cutover from `/opt/plane-fork` to `/opt/plane`
 - retirement of old local Plane application containers
+
+Validated already:
+
+- backend host-run bootstrap, migrations, instance bootstrap, and Celery worker/beat
+- API smoke checks on an alternate local port because `:8000` is occupied on this host
+- `web` and `admin` frontend dev servers through the documented `make` targets on alternate local ports because `:3000` is occupied on this host
+- `live` server startup was previously confirmed against local Redis during the host-run smoke pass
 
 ## Phase Plan
 
@@ -373,7 +380,7 @@ Exit criteria for Phase 3:
 - a new developer can run the fork locally without touching stock Plane application containers
 - daily backend and frontend work happens from source
 - documented bootstrap is shorter and clearer than the old overlay workflow
-- status: scaffolded in the fork, pending smoke-test and cutover
+- status: functionally validated in the fork, pending final cutover and retirement of the old overlay workspace
 
 ## Phase 4: Separate Infrastructure From Plane Code
 

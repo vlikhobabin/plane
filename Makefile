@@ -10,6 +10,12 @@ PIP_BIN := $(ROOT_DIR)/$(VENV)/bin/pip
 CELERY_BIN := $(ROOT_DIR)/$(VENV)/bin/celery
 COMPOSE := docker compose -f docker-compose.infra.yml
 API_ENV_LOADER := set -a && source .env && set +a
+DEV_HOST ?= 127.0.0.1
+API_PORT ?= 8000
+WEB_PORT ?= 3000
+ADMIN_PORT ?= 3001
+SPACE_PORT ?= 3002
+LIVE_PORT ?= 3100
 
 .DEFAULT_GOAL := help
 
@@ -29,14 +35,14 @@ help:
 	@printf '  %-24s %s\n' 'infra-logs' 'Tail local infrastructure logs'
 	@printf '  %-24s %s\n' 'dev-migrate' 'Run Django migrations with local settings'
 	@printf '  %-24s %s\n' 'dev-instance-bootstrap' 'Register and configure the local Plane instance'
-	@printf '  %-24s %s\n' 'dev-api' 'Run Django API on localhost:8000'
+	@printf '  %-24s %s\n' 'dev-api' 'Run Django API on $(DEV_HOST):$(API_PORT)'
 	@printf '  %-24s %s\n' 'dev-worker' 'Run Celery worker with local settings'
 	@printf '  %-24s %s\n' 'dev-beat' 'Run Celery beat with local settings'
-	@printf '  %-24s %s\n' 'dev-frontends' 'Run frontend dev servers via turbo'
-	@printf '  %-24s %s\n' 'dev-web' 'Run web frontend on localhost:3000'
-	@printf '  %-24s %s\n' 'dev-admin' 'Run admin frontend on localhost:3001'
-	@printf '  %-24s %s\n' 'dev-space' 'Run space frontend on localhost:3002'
-	@printf '  %-24s %s\n' 'dev-live' 'Run live server on localhost:3100'
+	@printf '  %-24s %s\n' 'dev-frontends' 'Run all frontend dev servers via turbo on default ports'
+	@printf '  %-24s %s\n' 'dev-web' 'Prebuild deps and run web frontend on $(DEV_HOST):$(WEB_PORT)'
+	@printf '  %-24s %s\n' 'dev-admin' 'Prebuild deps and run admin frontend on $(DEV_HOST):$(ADMIN_PORT)'
+	@printf '  %-24s %s\n' 'dev-space' 'Prebuild deps and run space frontend on $(DEV_HOST):$(SPACE_PORT)'
+	@printf '  %-24s %s\n' 'dev-live' 'Prebuild deps and run live server on $(DEV_HOST):$(LIVE_PORT)'
 
 dev-env:
 	@[ -f .env ] || cp .env.host-run.example .env
@@ -99,7 +105,7 @@ dev-api:
 	$(API_ENV_LOADER) && \
 	$(PYTHON_BIN) manage.py wait_for_db --settings=plane.settings.local && \
 	$(PYTHON_BIN) manage.py wait_for_migrations --settings=plane.settings.local && \
-	$(PYTHON_BIN) manage.py runserver 0.0.0.0:8000 --settings=plane.settings.local
+	$(PYTHON_BIN) manage.py runserver $(DEV_HOST):$(API_PORT) --settings=plane.settings.local
 
 dev-worker:
 	cd $(API_DIR) && \
@@ -119,13 +125,17 @@ dev-frontends:
 	$(PNPM) dev
 
 dev-web:
-	cd apps/web && $(PNPM) dev
+	$(PNPM) turbo run build --filter=web...
+	cd apps/web && $(PNPM) exec react-router dev --host $(DEV_HOST) --port $(WEB_PORT)
 
 dev-admin:
-	cd apps/admin && $(PNPM) dev
+	$(PNPM) turbo run build --filter=admin...
+	cd apps/admin && $(PNPM) exec react-router dev --host $(DEV_HOST) --port $(ADMIN_PORT)
 
 dev-space:
-	cd apps/space && $(PNPM) dev
+	$(PNPM) turbo run build --filter=space...
+	cd apps/space && $(PNPM) exec react-router dev --host $(DEV_HOST) --port $(SPACE_PORT)
 
 dev-live:
-	cd apps/live && $(PNPM) dev
+	$(PNPM) turbo run build --filter=live...
+	cd apps/live && PORT=$(LIVE_PORT) $(PNPM) dev
