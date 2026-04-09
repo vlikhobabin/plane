@@ -1,0 +1,145 @@
+# Local Development
+
+This repository now supports a host-run development workflow for Plane application code while keeping infrastructure services separate.
+
+Current intended layout during migration:
+
+- repository: `/opt/plane-fork`
+- future cutover target: `/opt/plane`
+- application code: runs directly from source on the host
+- infrastructure services: PostgreSQL, Redis, RabbitMQ, and optional local MinIO via Docker
+
+## What This Replaces
+
+For local development, this workflow replaces the old pattern of running the Plane application itself from `makeplane/*` containers.
+
+The goal is:
+
+- one readable monorepo checkout
+- Python in `.venv`
+- `pnpm` at the repo root
+- local `.env` files inside the repo
+- Docker used only for infrastructure dependencies
+
+## Prerequisites
+
+- Node.js `>=22.18.0`
+- `corepack`
+- Python `3.8+`
+- `python3-venv`
+- Docker with Compose
+
+## Files Added For Host-Run Dev
+
+- [Makefile](/opt/plane-fork/Makefile)
+- [docker-compose.infra.yml](/opt/plane-fork/docker-compose.infra.yml)
+- [.env.host-run.example](/opt/plane-fork/.env.host-run.example)
+- [apps/api/.env.host-run.example](/opt/plane-fork/apps/api/.env.host-run.example)
+
+## First-Time Setup
+
+1. Prepare env files and install dependencies:
+
+```bash
+make dev-bootstrap
+```
+
+This does the following:
+
+- copies host-run env templates into `.env` files if they do not already exist
+- creates `.venv`
+- installs backend dependencies from `apps/api/requirements/local.txt`
+- installs workspace node dependencies via `pnpm`
+- generates `SECRET_KEY` in `apps/api/.env` if it is missing
+
+2. Start infrastructure services:
+
+```bash
+make infra-up
+```
+
+This starts:
+
+- PostgreSQL on `127.0.0.1:5432`
+- Redis on `127.0.0.1:6379`
+- RabbitMQ on `127.0.0.1:5672`
+- RabbitMQ management UI on `127.0.0.1:15672`
+- MinIO on `127.0.0.1:9000`
+- MinIO console on `127.0.0.1:9090`
+
+3. Run database migrations:
+
+```bash
+make dev-migrate
+```
+
+4. Register and configure the local instance:
+
+```bash
+make dev-instance-bootstrap
+```
+
+This mirrors the old local API container bootstrap:
+
+- `wait_for_db`
+- `wait_for_migrations`
+- `register_instance`
+- `configure_instance`
+- `create_bucket`
+- `clear_cache`
+
+`register_instance`, `configure_instance`, and `create_bucket` are safe to re-run in normal local development.
+
+## Running Services
+
+Run each long-lived process in its own terminal.
+
+Backend:
+
+```bash
+make dev-api
+make dev-worker
+make dev-beat
+```
+
+Frontend options:
+
+```bash
+make dev-frontends
+```
+
+Or run individual apps:
+
+```bash
+make dev-web
+make dev-admin
+make dev-space
+make dev-live
+```
+
+Default local URLs:
+
+- API: `http://127.0.0.1:8000`
+- Web: `http://127.0.0.1:3000`
+- Admin: `http://127.0.0.1:3001`
+- Space: `http://127.0.0.1:3002`
+- Live: `http://127.0.0.1:3100`
+
+## Notes
+
+- Existing `.env` files are not overwritten by `make dev-env`.
+- Frontend `.env.example` files already point to localhost and are reused as-is.
+- Celery must run with `DJANGO_SETTINGS_MODULE=plane.settings.local`; the `Makefile` targets already handle that.
+- MinIO is kept in the local infra profile because Plane uses S3-compatible object storage for uploads and file assets. If you do not need uploads, you can stop using MinIO later, but the default host-run path keeps it enabled for parity.
+- Upstream `setup.sh` and `docker-compose-local.yml` are left intact for traceability. The fork-specific host-run workflow should use the files documented here instead.
+
+## Quick Start Summary
+
+```bash
+make dev-bootstrap
+make infra-up
+make dev-migrate
+make dev-instance-bootstrap
+```
+
+Then start the processes you need.

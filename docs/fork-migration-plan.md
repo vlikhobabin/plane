@@ -51,10 +51,16 @@ Implemented already:
 - native instance-admin guest-user API and `apps/admin` guest-user page added
 - native auth-page customization replaces `auth-patch.js`
 - native worklog block and "Факт" property row replace `worklog-helper.js`
+- host-run local-dev scaffolding added:
+  - `docker-compose.infra.yml`
+  - `Makefile`
+  - host-run `.env` templates
+  - `docs/local-dev.md`
 
 Not ported yet:
 
-- local host-run development workflow and cutover from `/opt/plane-fork` to `/opt/plane`
+- final cutover from `/opt/plane-fork` to `/opt/plane`
+- retirement of the old overlay repository and its application containers
 
 ## Principles
 
@@ -94,11 +100,17 @@ Likely target areas already present in the fork:
 
 ### Local development workflow
 
+Implemented in the fork:
+
+- Python venv bootstrap via `Makefile`
+- local `.env` strategy inside the monorepo
+- infrastructure-only Docker Compose file
+- host-run commands for Django, Celery, and frontend apps
+- local workflow documentation in `docs/local-dev.md`
+
 Still pending:
 
-- Python venv and backend bootstrap in the fork
-- local `.env` strategy inside the monorepo
-- one-command host-run developer workflow
+- smoke-test the host-run workflow against the dev database
 - cutover from `/opt/plane-fork` to `/opt/plane`
 - retirement of old local Plane application containers
 
@@ -125,6 +137,7 @@ Exit criteria:
 
 - roadmap committed in the fork
 - all upcoming migration work references the fork, not the overlay
+- status: completed
 
 ## Phase 1: Finish Backend Functional Parity
 
@@ -360,6 +373,7 @@ Exit criteria for Phase 3:
 - a new developer can run the fork locally without touching stock Plane application containers
 - daily backend and frontend work happens from source
 - documented bootstrap is shorter and clearer than the old overlay workflow
+- status: scaffolded in the fork, pending smoke-test and cutover
 
 ## Phase 4: Separate Infrastructure From Plane Code
 
@@ -372,6 +386,7 @@ Local infrastructure strategy:
 - PostgreSQL: existing local service is acceptable
 - Redis: host service
 - RabbitMQ: host service
+- MinIO: optional local S3-compatible storage for upload and asset parity
 
 Allowed local Docker usage:
 
