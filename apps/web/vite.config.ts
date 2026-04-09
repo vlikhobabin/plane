@@ -6,6 +6,8 @@ import tsconfigPaths from "vite-tsconfig-paths";
 
 dotenv.config({ path: path.resolve(__dirname, ".env") });
 
+const allowedHosts = ["plane-dev.meetwise.ru"];
+
 // Expose only vars starting with VITE_
 const viteEnv = Object.keys(process.env)
   .filter((k) => k.startsWith("VITE_"))
@@ -33,6 +35,7 @@ export default defineConfig(() => ({
   },
   server: {
     host: "127.0.0.1",
+    allowedHosts,
   },
   // No SSR-specific overrides needed; alias resolves to ESM build
 }));
