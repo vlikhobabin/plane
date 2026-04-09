@@ -14,6 +14,7 @@ This template assumes a production deploy directory shaped roughly like:
 /opt/plane-prod
   .env
   docker-compose.prod.yml
+  docker-compose.infra.yml
   caddy/Caddyfile
   scripts/
   backups/
@@ -26,6 +27,7 @@ Before any release cutover work begins:
 
 - `.env` is created from `.env.example`
 - `docker-compose.prod.yml` is reviewed against the live production host
+- `docker-compose.infra.yml` matches the persistent infra containers and volume names
 - `backup-db.sh` has run successfully at least once
 - `restore-db.sh` has been tested against a scratch database
 - `release-snapshot.sh` has been tested
@@ -172,6 +174,7 @@ Action:
 - Any final production script paths can still be adjusted when the real deploy directory is created.
 - The first cutover should preserve the current ingress shape and data plane.
 - The first cutover should reuse the existing `plane-db`, `plane-redis`, `plane-mq`, and `prod_plane-net`.
+- `docker-compose.infra.yml` should remain in `/opt/plane-prod` as the infra source of truth even if infra containers are not recreated immediately.
 - The manual GitHub deploy workflow expects:
   - `PLANE_PROD_DEPLOY_SSH_KEY`
   - `PLANE_PROD_DEPLOY_HOST`

@@ -21,6 +21,7 @@ Main files:
 
 - `.env.example`
 - `docker-compose.prod.yml`
+- `docker-compose.infra.yml`
 - `caddy/Caddyfile`
 - `scripts/backup-db.sh`
 - `scripts/capture-db-baseline.sh`
@@ -38,4 +39,5 @@ Recommended adoption flow:
 3. Put the scripts on the production server.
 4. Complete `Phase 0` from `docs/prod-migration-plan.md`.
 5. Point the runtime at the existing external Docker network and infra containers.
-6. Only then use this template for staging or cutover work.
+6. Keep infra definitions in `docker-compose.infra.yml` so `/opt/plane-prod` is the operational source of truth.
+7. Only then use this template for staging or cutover work.
