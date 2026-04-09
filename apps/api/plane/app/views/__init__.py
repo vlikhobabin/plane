@@ -160,6 +160,7 @@ from .issue.worklog import (
     ProjectTimeReportEndpoint,
     ResolveIssueIdentifierEndpoint,
 )
+from .workspace.guest_user import WorkspaceGuestUserEndpoint
 
 from .module.base import (
     ModuleViewSet,

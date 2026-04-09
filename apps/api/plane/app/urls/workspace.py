@@ -36,6 +36,7 @@ from plane.app.views import (
     WorkspaceHomePreferenceViewSet,
     WorkspaceStickyViewSet,
     WorkspaceUserPreferenceViewSet,
+    WorkspaceGuestUserEndpoint,
 )
 
 
@@ -240,6 +241,11 @@ urlpatterns = [
         "workspaces/<str:slug>/recent-visits/",
         UserRecentVisitViewSet.as_view({"get": "list"}),
         name="workspace-recent-visits",
+    ),
+    path(
+        "workspaces/<str:slug>/guest-users/",
+        WorkspaceGuestUserEndpoint.as_view(),
+        name="workspace-guest-users",
     ),
     path(
         "workspaces/<str:slug>/stickies/",

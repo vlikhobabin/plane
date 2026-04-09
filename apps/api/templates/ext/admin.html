@@ -1,0 +1,79 @@
+{% extends "ext/layout.html" %}
+
+{% block title %}Создать пользователя — Plane Admin{% endblock %}
+{% block header %}Создать гостевого пользователя{% endblock %}
+
+{% block content %}
+
+{% if success %}
+<div class="alert alert-success">
+  Пользователь создан. Письмо с паролем отправлено на <strong>{{ result_email }}</strong>
+</div>
+{% elif email_error %}
+<div class="alert alert-warning">
+  Пользователь создан, но письмо не отправлено.<br>
+  Сообщите пароль вручную: <code>{{ fallback_password }}</code>
+</div>
+{% elif error %}
+<div class="alert alert-danger">{{ error }}</div>
+{% endif %}
+
+<form method="post" action="/ext/admin/create-user">
+  {% csrf_token %}
+
+  <div class="mb-3">
+    <label class="form-label fw-semibold">Email (логин)</label>
+    <input type="email" name="email" class="form-control" required
+           value="{{ form_email|default:'' }}" placeholder="ivan@company.ru">
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label fw-semibold">Имя</label>
+    <input type="text" name="first_name" class="form-control" required
+           value="{{ form_first_name|default:'' }}" placeholder="Иван">
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label fw-semibold">Рабочее пространство (Workspace)</label>
+    <select name="workspace_id" id="workspace_id" class="form-select" required onchange="filterProjects()">
+      <option value="">— выберите —</option>
+      {% for ws in workspaces %}
+      <option value="{{ ws.id }}" {% if selected_workspace|stringformat:"s" == ws.id|stringformat:"s" %}selected{% endif %}>
+        {{ ws.name }} ({{ ws.slug }})
+      </option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label fw-semibold">Проекты</label>
+    <div id="project-list" class="border rounded p-2" style="max-height:220px; overflow-y:auto; background:#fff;">
+      {% for project in projects %}
+      <div class="form-check project-item" data-ws="{{ project.workspace_id }}">
+        <input class="form-check-input" type="checkbox"
+               name="project_ids" value="{{ project.id }}" id="p_{{ project.id }}"
+               {% if project.id|stringformat:"s" in selected_projects %}checked{% endif %}>
+        <label class="form-check-label" for="p_{{ project.id }}">
+          {{ project.name }} <span class="text-muted">({{ project.identifier }})</span>
+        </label>
+      </div>
+      {% empty %}
+      <span class="text-muted small">Нет доступных проектов</span>
+      {% endfor %}
+    </div>
+  </div>
+
+  <button type="submit" class="btn btn-dark w-100">Создать и отправить письмо</button>
+</form>
+
+<script>
+function filterProjects() {
+  const wsId = document.getElementById('workspace_id').value;
+  document.querySelectorAll('.project-item').forEach(function(el) {
+    el.style.display = (!wsId || el.dataset.ws === wsId) ? '' : 'none';
+  });
+}
+document.addEventListener('DOMContentLoaded', filterProjects);
+</script>
+
+{% endblock %}
