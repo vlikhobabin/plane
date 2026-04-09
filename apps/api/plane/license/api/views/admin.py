@@ -39,6 +39,13 @@ from plane.authentication.adapter.error import (
 )
 from plane.utils.ip_address import get_client_ip
 from plane.utils.path_validator import get_safe_redirect_url
+from plane.app.services.guest_users import (
+    GuestUserProvisioningError,
+    generate_guest_password,
+    provision_guest_user,
+    send_guest_welcome_email,
+)
+from plane.db.models import Project, Workspace, WorkspaceMember
 
 
 class InstanceAdminEndpoint(BaseAPIView):
@@ -84,6 +91,127 @@ class InstanceAdminEndpoint(BaseAPIView):
         instance = Instance.objects.first()
         InstanceAdmin.objects.filter(instance=instance, pk=pk).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class InstanceAdminGuestUserEndpoint(BaseAPIView):
+    def _admin_workspace_memberships(self, user):
+        return (
+            WorkspaceMember.objects.filter(
+                member=user,
+                is_active=True,
+                role__gte=20,
+                deleted_at__isnull=True,
+                workspace__deleted_at__isnull=True,
+            )
+            .select_related("workspace")
+            .order_by("workspace__name")
+        )
+
+    def get(self, request):
+        memberships = list(self._admin_workspace_memberships(request.user))
+        workspace_ids = [membership.workspace_id for membership in memberships]
+
+        projects = (
+            Project.objects.filter(workspace_id__in=workspace_ids, deleted_at__isnull=True)
+            .order_by("name")
+            .values("id", "name", "identifier", "workspace_id")
+        )
+
+        projects_by_workspace = {}
+        for project in projects:
+            workspace_id = str(project["workspace_id"])
+            projects_by_workspace.setdefault(workspace_id, []).append(
+                {
+                    "id": str(project["id"]),
+                    "name": project["name"],
+                    "identifier": project["identifier"],
+                }
+            )
+
+        workspaces = [
+            {
+                "id": str(membership.workspace_id),
+                "name": membership.workspace.name,
+                "slug": membership.workspace.slug,
+                "projects": projects_by_workspace.get(str(membership.workspace_id), []),
+            }
+            for membership in memberships
+        ]
+
+        return Response({"workspaces": workspaces}, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        email = request.data.get("email", "")
+        first_name = request.data.get("first_name", "")
+        workspace_id = request.data.get("workspace_id")
+        project_ids = request.data.get("project_ids") or []
+
+        if not workspace_id:
+            return Response({"error": "Workspace is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not isinstance(project_ids, list) or len(project_ids) == 0:
+            return Response({"error": "Select at least one project"}, status=status.HTTP_400_BAD_REQUEST)
+
+        workspace = (
+            Workspace.objects.filter(
+                pk=workspace_id,
+                deleted_at__isnull=True,
+                workspace_member__member=request.user,
+                workspace_member__role__gte=20,
+                workspace_member__is_active=True,
+                workspace_member__deleted_at__isnull=True,
+            )
+            .distinct()
+            .first()
+        )
+
+        if workspace is None:
+            return Response({"error": "Workspace was not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        unique_project_ids = list(dict.fromkeys(project_ids))
+        projects = list(
+            Project.objects.filter(
+                workspace=workspace,
+                pk__in=unique_project_ids,
+                deleted_at__isnull=True,
+            ).order_by("name")
+        )
+
+        if len(projects) != len(unique_project_ids):
+            return Response({"error": "One or more projects are invalid"}, status=status.HTTP_400_BAD_REQUEST)
+
+        password = generate_guest_password()
+
+        try:
+            user = provision_guest_user(
+                email=email,
+                first_name=first_name,
+                workspace=workspace,
+                projects=projects,
+                password=password,
+            )
+        except GuestUserProvisioningError as exc:
+            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+        response_payload = {
+            "success": True,
+            "email": user.email,
+            "password": password,
+            "user_id": str(user.id),
+        }
+
+        try:
+            login_url = urljoin(f"{base_host(request=request, is_app=True).rstrip('/')}/", "sign-in/")
+            send_guest_welcome_email(
+                to_email=user.email,
+                first_name=user.first_name,
+                password=password,
+                login_url=login_url,
+            )
+        except GuestUserProvisioningError as exc:
+            response_payload["smtp_error"] = str(exc)
+
+        return Response(response_payload, status=status.HTTP_201_CREATED)
 
 
 class InstanceAdminSignUpEndpoint(View):

@@ -199,7 +199,7 @@ export const SetPasswordForm = observer(function SetPasswordForm() {
             )}
         </div>
         <Button type="submit" variant="primary" className="w-full" size="xl" disabled={isButtonDisabled}>
-          {t("common.continue")}
+          Далее
         </Button>
       </form>
     </FormContainer>

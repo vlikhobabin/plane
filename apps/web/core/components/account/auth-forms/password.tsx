@@ -284,7 +284,7 @@ export const AuthPasswordForm = observer(function AuthPasswordForm(props: Props)
                 {isSubmitting ? (
                   <Spinner height="20px" width="20px" />
                 ) : isSMTPConfigured ? (
-                  t("common.continue")
+                  "Далее"
                 ) : (
                   t("common.go_to_workspace")
                 )}
@@ -304,7 +304,7 @@ export const AuthPasswordForm = observer(function AuthPasswordForm(props: Props)
             </>
           ) : (
             <Button type="submit" variant="primary" className="w-full" size="xl" disabled={isButtonDisabled}>
-              {isSubmitting ? <Spinner height="20px" width="20px" /> : "Create account"}
+              {isSubmitting ? <Spinner height="20px" width="20px" /> : "Создать аккаунт"}
             </Button>
           )}
         </div>

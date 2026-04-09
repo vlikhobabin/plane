@@ -11,6 +11,9 @@ import type {
   IInstance,
   IInstanceAdmin,
   IInstanceConfiguration,
+  IInstanceGuestUserOptions,
+  IInstanceGuestUserPayload,
+  IInstanceGuestUserResult,
   IInstanceInfo,
   TPage,
 } from "@plane/types";
@@ -66,6 +69,22 @@ export class InstanceService extends APIService {
    */
   async admins(): Promise<IInstanceAdmin[]> {
     return this.get("/api/instances/admins/", { validateStatus: null })
+      .then((response) => response.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async guestUserOptions(): Promise<IInstanceGuestUserOptions> {
+    return this.get("/api/instances/admins/guest-users/")
+      .then((response) => response.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async createGuestUser(data: IInstanceGuestUserPayload): Promise<IInstanceGuestUserResult> {
+    return this.post("/api/instances/admins/guest-users/", data)
       .then((response) => response.data)
       .catch((error) => {
         throw error?.response?.data;

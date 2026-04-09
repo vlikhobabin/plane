@@ -168,7 +168,7 @@ export function AuthUniqueCodeForm(props: TAuthUniqueCodeForm) {
           ) : isSubmitting ? (
             <Spinner height="20px" width="20px" />
           ) : (
-            t("common.continue")
+            "Далее"
           )}
         </Button>
       </div>

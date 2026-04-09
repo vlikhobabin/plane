@@ -47,11 +47,12 @@ Implemented already:
 - Russian email templates and background tasks moved into `apps/api`
 - worklog backend ported from FastAPI into Django
 - compatibility `/ext/api/...` routes hosted inside Django
+- guest provisioning and welcome-email flow ported into Django
+- native instance-admin guest-user API and `apps/admin` guest-user page added
+- native auth-page customization replaces `auth-patch.js`
 
 Not ported yet:
 
-- guest provisioning flow
-- admin/custom login flow
 - worklog frontend and the "Факт" issue property row
 - local host-run development workflow and cutover from `/opt/plane-fork` to `/opt/plane`
 
@@ -76,15 +77,12 @@ Already done:
 
 Still pending:
 
-- guest provisioning logic from `extensions/fastapi/core/provisioning.py`
-- SMTP/config-aware welcome email flow from `extensions/fastapi/core/email.py`
-- admin HTML/API flow from `extensions/fastapi/routers/admin.py`
+- full removal of temporary `/ext/admin` compatibility flow after native admin rollout is accepted
 
 ### Frontend parity work
 
 Still pending:
 
-- native replacement for `extensions/fastapi/static/auth-patch.js`
 - native replacement for `extensions/fastapi/static/worklog-helper.js`
 - removal of `patches/plane-web/nginx.conf` injection dependency
 
@@ -219,6 +217,7 @@ Exit criteria for Phase 1:
 - guest/user provisioning works entirely from Django
 - the welcome email template is served from the fork
 - admin user-creation flow works without the FastAPI sidecar
+- status: completed, with temporary `/ext/admin` compatibility still present until final cleanup
 
 ## Phase 2: Replace Frontend Injections With Native UI
 
@@ -488,23 +487,22 @@ After cutover:
 
 ## Immediate Next Step
 
-Start with `migration/guest-provisioning-port`.
+Start with `migration/worklog-frontend-native-port`.
 
 Why first:
 
-- it removes the most important remaining backend dependency on `extensions/fastapi`
-- it unblocks the admin create-user flow
-- it keeps the migration moving from backend parity toward full sidecar removal
+- backend parity for guest provisioning and admin flow is already in place
+- auth-page customization is already native
+- the remaining visible dependency on overlay UI is the worklog block and "Факт" property rendering
 
-Concrete first implementation slice:
+Concrete implementation slice:
 
-- port guest creation service
-- port SMTP/decryption-backed welcome email service
-- port welcome template
-- expose native Django endpoint(s) for create-user
+- replace `worklog-helper.js` with native issue-detail components
+- connect the UI to the Django worklog endpoints already living in `apps/api`
+- keep `/ext/api/...` only as a short transitional compatibility layer if needed during rollout
 
 After that:
 
-- port the admin page or admin React flow
-- then move to native worklog frontend
-- then bootstrap host-run local development
+- bootstrap host-run local development
+- validate the fork against the existing dev database
+- perform the controlled `/opt/plane-fork` -> `/opt/plane` cutover

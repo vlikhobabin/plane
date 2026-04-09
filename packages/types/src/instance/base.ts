@@ -83,6 +83,38 @@ export interface IInstanceAdmin {
   user_detail: IUserLite;
 }
 
+export interface IInstanceGuestUserProjectOption {
+  id: string;
+  name: string;
+  identifier: string;
+}
+
+export interface IInstanceGuestUserWorkspaceOption {
+  id: string;
+  name: string;
+  slug: string;
+  projects: IInstanceGuestUserProjectOption[];
+}
+
+export interface IInstanceGuestUserOptions {
+  workspaces: IInstanceGuestUserWorkspaceOption[];
+}
+
+export interface IInstanceGuestUserPayload {
+  email: string;
+  first_name: string;
+  workspace_id: string;
+  project_ids: string[];
+}
+
+export interface IInstanceGuestUserResult {
+  success: boolean;
+  email: string;
+  password: string;
+  user_id: string;
+  smtp_error?: string;
+}
+
 export type TInstanceIntercomConfigurationKeys = "IS_INTERCOM_ENABLED" | "INTERCOM_APP_ID";
 
 export type TInstanceConfigurationKeys =

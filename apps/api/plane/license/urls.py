@@ -23,6 +23,11 @@ from plane.license.api.views import (
 urlpatterns = [
     path("", InstanceEndpoint.as_view(), name="instance"),
     path("admins/", InstanceAdminEndpoint.as_view(), name="instance-admins"),
+    path(
+        "admins/guest-users/",
+        InstanceAdminGuestUserEndpoint.as_view(),
+        name="instance-admin-guest-users",
+    ),
     path("admins/me/", InstanceAdminUserMeEndpoint.as_view(), name="instance-admins"),
     path(
         "admins/session/",
