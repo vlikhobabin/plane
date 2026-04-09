@@ -7,7 +7,6 @@ PNPM ?= pnpm
 API_DIR := apps/api
 PYTHON_BIN := $(ROOT_DIR)/$(VENV)/bin/python
 PIP_BIN := $(ROOT_DIR)/$(VENV)/bin/pip
-CELERY_BIN := $(ROOT_DIR)/$(VENV)/bin/celery
 COMPOSE := docker compose -f docker-compose.infra.yml
 API_ENV_LOADER := set -a && source .env && set +a
 DEV_HOST ?= 127.0.0.1
@@ -112,14 +111,14 @@ dev-worker:
 	$(API_ENV_LOADER) && \
 	$(PYTHON_BIN) manage.py wait_for_db --settings=plane.settings.local && \
 	$(PYTHON_BIN) manage.py wait_for_migrations --settings=plane.settings.local && \
-	DJANGO_SETTINGS_MODULE=plane.settings.local $(CELERY_BIN) -A plane worker -l info
+	DJANGO_SETTINGS_MODULE=plane.settings.local $(PYTHON_BIN) -m celery -A plane worker -l info
 
 dev-beat:
 	cd $(API_DIR) && \
 	$(API_ENV_LOADER) && \
 	$(PYTHON_BIN) manage.py wait_for_db --settings=plane.settings.local && \
 	$(PYTHON_BIN) manage.py wait_for_migrations --settings=plane.settings.local && \
-	DJANGO_SETTINGS_MODULE=plane.settings.local $(CELERY_BIN) -A plane beat -l info
+	DJANGO_SETTINGS_MODULE=plane.settings.local $(PYTHON_BIN) -m celery -A plane beat -l info
 
 dev-frontends:
 	$(PNPM) dev
