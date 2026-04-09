@@ -38,31 +38,7 @@ services:
       - "5672:5672"
       - "15672:15672"
 
-  plane-minio:
-    image: minio/minio
-    restart: unless-stopped
-    env_file:
-      - .env
-    entrypoint: >
-      /bin/sh -c "
-      mkdir -p /export/${AWS_S3_BUCKET_NAME} &&
-      minio server /export --console-address ':9090' &
-      sleep 5 &&
-      mc alias set myminio http://127.0.0.1:9000 ${AWS_ACCESS_KEY_ID} ${AWS_SECRET_ACCESS_KEY} &&
-      mc mb myminio/${AWS_S3_BUCKET_NAME} -p || true &&
-      tail -f /dev/null
-      "
-    environment:
-      MINIO_ROOT_USER: ${AWS_ACCESS_KEY_ID}
-      MINIO_ROOT_PASSWORD: ${AWS_SECRET_ACCESS_KEY}
-    volumes:
-      - uploads:/export
-    ports:
-      - "9000:9000"
-      - "9090:9090"
-
 volumes:
   pgdata:
   rabbitmq_data:
   redisdata:
-  uploads:

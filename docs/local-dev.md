@@ -6,7 +6,7 @@ Current intended layout during migration:
 
 - repository: `/opt/plane`
 - application code: runs directly from source on the host
-- infrastructure services: PostgreSQL, Redis, RabbitMQ, and optional local MinIO via Docker
+- infrastructure services: PostgreSQL, Redis, and RabbitMQ via Docker, with uploads stored in an external S3-compatible service
 
 ## What This Replaces
 
@@ -63,8 +63,6 @@ This starts:
 - Redis on `127.0.0.1:6379`
 - RabbitMQ on `127.0.0.1:5672`
 - RabbitMQ management UI on `127.0.0.1:15672`
-- MinIO on `127.0.0.1:9000`
-- MinIO console on `127.0.0.1:9090`
 
 3. Run database migrations:
 
@@ -87,7 +85,7 @@ This mirrors the old local API container bootstrap:
 - `create_bucket`
 - `clear_cache`
 
-`register_instance`, `configure_instance`, and `create_bucket` are safe to re-run in normal local development.
+`register_instance`, `configure_instance`, and `create_bucket` are safe to re-run in normal local development when your S3 credentials allow bucket management.
 
 ## Running Services
 
@@ -142,7 +140,7 @@ Default local URLs:
 - Frontend `.env.example` files already point to localhost and are reused as-is.
 - `make dev-frontends` still runs the full turbo dev graph and expects the default frontend ports to be free. Use the per-app targets above when the host already has services on `3000` or when you only need one frontend.
 - Celery must run with `DJANGO_SETTINGS_MODULE=plane.settings.local`; the `Makefile` targets already handle that.
-- MinIO is kept in the local infra profile because Plane uses S3-compatible object storage for uploads and file assets. If you do not need uploads, you can stop using MinIO later, but the default host-run path keeps it enabled for parity.
+- Plane expects external S3-compatible object storage credentials in `apps/api/.env` for uploads and file assets. The local infra profile does not start MinIO.
 - Upstream `setup.sh` and `docker-compose-local.yml` are left intact for traceability. The fork-specific host-run workflow should use the files documented here instead.
 
 ## Quick Start Summary
