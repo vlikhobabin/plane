@@ -7,6 +7,7 @@ from django.urls import path
 from plane.license.api.views import (
     EmailCredentialCheckEndpoint,
     InstanceAdminEndpoint,
+    InstanceAdminGuestUserEndpoint,
     InstanceAdminSignInEndpoint,
     InstanceAdminSignUpEndpoint,
     InstanceConfigurationEndpoint,

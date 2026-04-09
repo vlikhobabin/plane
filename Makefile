@@ -9,6 +9,7 @@ PYTHON_BIN := $(ROOT_DIR)/$(VENV)/bin/python
 PIP_BIN := $(ROOT_DIR)/$(VENV)/bin/pip
 CELERY_BIN := $(ROOT_DIR)/$(VENV)/bin/celery
 COMPOSE := docker compose -f docker-compose.infra.yml
+API_ENV_LOADER := set -a && source .env && set +a
 
 .DEFAULT_GOAL := help
 
@@ -72,10 +73,12 @@ infra-logs:
 
 dev-migrate:
 	cd $(API_DIR) && \
+	$(API_ENV_LOADER) && \
 	$(PYTHON_BIN) manage.py migrate --settings=plane.settings.local
 
 dev-instance-bootstrap:
 	cd $(API_DIR) && \
+	$(API_ENV_LOADER) && \
 	$(PYTHON_BIN) manage.py wait_for_db --settings=plane.settings.local && \
 	$(PYTHON_BIN) manage.py wait_for_migrations --settings=plane.settings.local && \
 	MACHINE_SIGNATURE="$$( \
@@ -93,18 +96,21 @@ dev-instance-bootstrap:
 
 dev-api:
 	cd $(API_DIR) && \
+	$(API_ENV_LOADER) && \
 	$(PYTHON_BIN) manage.py wait_for_db --settings=plane.settings.local && \
 	$(PYTHON_BIN) manage.py wait_for_migrations --settings=plane.settings.local && \
 	$(PYTHON_BIN) manage.py runserver 0.0.0.0:8000 --settings=plane.settings.local
 
 dev-worker:
 	cd $(API_DIR) && \
+	$(API_ENV_LOADER) && \
 	$(PYTHON_BIN) manage.py wait_for_db --settings=plane.settings.local && \
 	$(PYTHON_BIN) manage.py wait_for_migrations --settings=plane.settings.local && \
 	DJANGO_SETTINGS_MODULE=plane.settings.local $(CELERY_BIN) -A plane worker -l info
 
 dev-beat:
 	cd $(API_DIR) && \
+	$(API_ENV_LOADER) && \
 	$(PYTHON_BIN) manage.py wait_for_db --settings=plane.settings.local && \
 	$(PYTHON_BIN) manage.py wait_for_migrations --settings=plane.settings.local && \
 	DJANGO_SETTINGS_MODULE=plane.settings.local $(CELERY_BIN) -A plane beat -l info
