@@ -123,22 +123,29 @@ class UserAssetsV2Endpoint(BaseAPIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Check if the file type is allowed
-        allowed_types = [
-            "image/jpeg",
-            "image/png",
-            "image/webp",
-            "image/jpg",
-            "image/gif",
+        # Restrict cover/logo/avatar uploads to image types only.
+        image_only_types = [
+            FileAsset.EntityTypeContext.WORKSPACE_LOGO,
+            FileAsset.EntityTypeContext.PROJECT_COVER,
+            FileAsset.EntityTypeContext.USER_AVATAR,
+            FileAsset.EntityTypeContext.USER_COVER,
         ]
-        if type not in allowed_types:
-            return Response(
-                {
-                    "error": "Invalid file type. Only JPEG, PNG, WebP, JPG and GIF files are allowed.",
-                    "status": False,
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        if entity_type in image_only_types:
+            allowed_types = [
+                "image/jpeg",
+                "image/png",
+                "image/webp",
+                "image/jpg",
+                "image/gif",
+            ]
+            if type not in allowed_types:
+                return Response(
+                    {
+                        "error": "Invalid file type. Only JPEG, PNG, WebP, JPG and GIF files are allowed.",
+                        "status": False,
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
         # asset key
         asset_key = f"{uuid.uuid4().hex}-{name}"

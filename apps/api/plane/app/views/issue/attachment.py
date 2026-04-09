@@ -101,7 +101,8 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
         type = request.data.get("type", False)
         size = int(request.data.get("size", settings.FILE_SIZE_LIMIT))
 
-        if not type or type not in settings.ATTACHMENT_MIME_TYPES:
+        extra_mime_types = ["text/markdown", "text/x-markdown"]
+        if not type or (type not in settings.ATTACHMENT_MIME_TYPES and type not in extra_mime_types):
             return Response(
                 {"error": "Invalid file type.", "status": False},
                 status=status.HTTP_400_BAD_REQUEST,
