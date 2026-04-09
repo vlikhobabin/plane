@@ -1,0 +1,43 @@
+{
+  servers {
+    max_header_size 25MB
+    client_ip_headers X-Forwarded-For X-Real-IP
+    trusted_proxies static 0.0.0.0/0
+  }
+}
+
+:80 {
+  request_body {
+    max_size {$FILE_SIZE_LIMIT}
+  }
+
+  redir /spaces /spaces/ permanent
+  handle_path /spaces/* {
+    reverse_proxy space:3000
+  }
+
+  redir /god-mode /god-mode/ permanent
+  handle_path /god-mode/* {
+    reverse_proxy admin:3000
+  }
+
+  handle /live/* {
+    reverse_proxy live:3000
+  }
+
+  handle /api/* {
+    reverse_proxy api:8000
+  }
+
+  handle /auth/* {
+    reverse_proxy api:8000
+  }
+
+  handle /static/* {
+    reverse_proxy api:8000
+  }
+
+  handle {
+    reverse_proxy web:3000
+  }
+}

@@ -1,0 +1,169 @@
+x-plane-app-env: &plane-app-env
+  WEB_URL: ${WEB_URL}
+  DEBUG: ${DEBUG:-0}
+  CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-}
+  DATABASE_URL: ${DATABASE_URL}
+  SECRET_KEY: ${SECRET_KEY}
+  AMQP_URL: ${AMQP_URL}
+  REDIS_URL: ${REDIS_URL}
+  USE_MINIO: ${USE_MINIO:-0}
+  MINIO_ENDPOINT_SSL: ${MINIO_ENDPOINT_SSL:-1}
+  AWS_REGION: ${AWS_REGION}
+  AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+  AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+  AWS_S3_ENDPOINT_URL: ${AWS_S3_ENDPOINT_URL}
+  AWS_S3_BUCKET_NAME: ${AWS_S3_BUCKET_NAME}
+  EMAIL_HOST: ${EMAIL_HOST}
+  EMAIL_HOST_USER: ${EMAIL_HOST_USER}
+  EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD}
+  EMAIL_PORT: ${EMAIL_PORT}
+  EMAIL_USE_SSL: ${EMAIL_USE_SSL}
+  DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL}
+  API_KEY_RATE_LIMIT: ${API_KEY_RATE_LIMIT:-60/minute}
+  LIVE_SERVER_SECRET_KEY: ${LIVE_SERVER_SECRET_KEY}
+
+x-db-env: &db-env
+  POSTGRES_USER: ${POSTGRES_USER}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+  POSTGRES_DB: ${POSTGRES_DB}
+
+x-mq-env: &mq-env
+  RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+  RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+  RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST}
+
+services:
+  proxy:
+    image: caddy:2.10.0
+    container_name: plane-proxy
+    restart: unless-stopped
+    ports:
+      - "${LISTEN_ADDRESS:-127.0.0.1}:${LISTEN_PORT:-8090}:80"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+    depends_on:
+      - web
+      - admin
+      - space
+      - live
+      - api
+
+  api:
+    image: ghcr.io/vlikhobabin/plane-backend:${IMAGE_TAG}
+    container_name: plane-api
+    command: ./bin/docker-entrypoint-api.sh
+    restart: unless-stopped
+    environment:
+      <<: *plane-app-env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      mq:
+        condition: service_started
+
+  worker:
+    image: ghcr.io/vlikhobabin/plane-backend:${IMAGE_TAG}
+    container_name: plane-worker
+    command: ./bin/docker-entrypoint-worker.sh
+    restart: unless-stopped
+    environment:
+      <<: *plane-app-env
+    depends_on:
+      api:
+        condition: service_started
+
+  beat:
+    image: ghcr.io/vlikhobabin/plane-backend:${IMAGE_TAG}
+    container_name: plane-beat
+    command: ./bin/docker-entrypoint-beat.sh
+    restart: unless-stopped
+    environment:
+      <<: *plane-app-env
+    depends_on:
+      api:
+        condition: service_started
+
+  migrator:
+    image: ghcr.io/vlikhobabin/plane-backend:${IMAGE_TAG}
+    container_name: plane-migrator
+    command: ./bin/docker-entrypoint-migrator.sh
+    restart: "no"
+    profiles: ["ops"]
+    environment:
+      <<: *plane-app-env
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    image: ghcr.io/vlikhobabin/plane-web:${IMAGE_TAG}
+    container_name: plane-web
+    restart: unless-stopped
+    depends_on:
+      - api
+
+  admin:
+    image: ghcr.io/vlikhobabin/plane-admin:${IMAGE_TAG}
+    container_name: plane-admin
+    restart: unless-stopped
+    depends_on:
+      - api
+
+  space:
+    image: ghcr.io/vlikhobabin/plane-space:${IMAGE_TAG}
+    container_name: plane-space
+    restart: unless-stopped
+    depends_on:
+      - api
+
+  live:
+    image: ghcr.io/vlikhobabin/plane-live:${IMAGE_TAG}
+    container_name: plane-live
+    restart: unless-stopped
+    environment:
+      API_BASE_URL: http://api:8000
+      REDIS_URL: ${REDIS_URL}
+      LIVE_SERVER_SECRET_KEY: ${LIVE_SERVER_SECRET_KEY}
+    depends_on:
+      - api
+
+  db:
+    image: postgres:15.7-alpine
+    container_name: plane-db
+    command: postgres -c 'max_connections=1000'
+    restart: unless-stopped
+    environment:
+      <<: *db-env
+    volumes:
+      - plane-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: valkey/valkey:7.2.11-alpine
+    container_name: plane-redis
+    restart: unless-stopped
+    volumes:
+      - plane-redisdata:/data
+
+  mq:
+    image: rabbitmq:3.13.6-alpine
+    container_name: plane-mq
+    restart: unless-stopped
+    environment:
+      <<: *mq-env
+    volumes:
+      - plane-mqdata:/var/lib/rabbitmq
+
+volumes:
+  plane-pgdata:
+    name: plane-pgdata
+  plane-redisdata:
+    name: plane-redisdata
+  plane-mqdata:
+    name: plane-mqdata
