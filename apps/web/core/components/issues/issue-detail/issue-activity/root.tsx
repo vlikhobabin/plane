@@ -4,7 +4,7 @@
  * See the LICENSE file for details.
  */
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import uniq from "lodash-es/uniq";
 import { observer } from "mobx-react";
 // plane package imports
@@ -18,11 +18,11 @@ import type { TFileSignedURLResponse, TIssueComment } from "@plane/types";
 // components
 import { CommentCreate } from "@/components/comments/comment-create";
 // hooks
-import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useProject } from "@/hooks/store/use-project";
-import { useUser, useUserPermissions } from "@/hooks/store/user";
+import { useUserPermissions } from "@/hooks/store/user";
 // plane web components
 import { ActivityFilterRoot } from "@/plane-web/components/issues/worklog/activity/filter-root";
+import { IssueActivityWorklogBlock } from "@/plane-web/components/issues/worklog/activity/block";
 import { IssueActivityWorklogCreateButton } from "@/plane-web/components/issues/worklog/activity/worklog-create-button";
 import { IssueActivityCommentRoot } from "./activity-comment-root";
 import { useWorkItemCommentOperations } from "./helper";
@@ -53,21 +53,16 @@ export const IssueActivity = observer(function IssueActivity(props: TIssueActivi
     defaultActivityFilters
   );
   const { setValue: setSortOrder, storedValue: sortOrder } = useLocalStorage("activity_sort_order", E_SORT_ORDER.ASC);
-  // store hooks
-  const {
-    issue: { getIssueById },
-  } = useIssueDetail();
-
+  const [openComposerSignal, setOpenComposerSignal] = useState(0);
   const { getProjectRoleByWorkspaceSlugAndProjectId } = useUserPermissions();
   const { getProjectById } = useProject();
-  const { data: currentUser } = useUser();
   // derived values
-  const issue = issueId ? getIssueById(issueId) : undefined;
   const currentUserProjectRole = getProjectRoleByWorkspaceSlugAndProjectId(workspaceSlug, projectId);
-  const isAdmin = currentUserProjectRole === EUserPermissions.ADMIN;
-  const isGuest = currentUserProjectRole === EUserPermissions.GUEST;
-  const isAssigned = issue?.assignee_ids && currentUser?.id ? issue?.assignee_ids.includes(currentUser?.id) : false;
-  const isWorklogButtonEnabled = !isIntakeIssue && !isGuest && (isAdmin || isAssigned);
+  const canUseWorklogs =
+    !isIntakeIssue &&
+    currentUserProjectRole !== undefined &&
+    currentUserProjectRole >= EUserPermissions.MEMBER;
+  const isWorklogButtonEnabled = canUseWorklogs && !disabled;
   // toggle filter
   const toggleFilter = (filter: TActivityFilters) => {
     if (!selectedFilters) return;
@@ -104,6 +99,16 @@ export const IssueActivity = observer(function IssueActivity(props: TIssueActivi
   );
   if (!project) return <></>;
 
+  const worklogBlock = canUseWorklogs ? (
+    <IssueActivityWorklogBlock
+      workspaceSlug={workspaceSlug}
+      projectId={projectId}
+      issueId={issueId}
+      disabled={disabled}
+      openComposerSignal={openComposerSignal}
+    />
+  ) : null;
+
   return (
     <div className="space-y-4">
       {/* header */}
@@ -116,6 +121,7 @@ export const IssueActivity = observer(function IssueActivity(props: TIssueActivi
               projectId={projectId}
               issueId={issueId}
               disabled={disabled}
+              onClick={() => setOpenComposerSignal((value) => value + 1)}
             />
           )}
           <ActivitySortRoot sortOrder={sortOrder || E_SORT_ORDER.ASC} toggleSort={toggleSortOrder} />
@@ -132,6 +138,7 @@ export const IssueActivity = observer(function IssueActivity(props: TIssueActivi
       <div className="space-y-3">
         <div className="min-h-[200px]">
           <div className="space-y-3">
+            {!disabled && sortOrder === E_SORT_ORDER.DESC && worklogBlock}
             {!disabled && sortOrder === E_SORT_ORDER.DESC && renderCommentCreationBox}
             <IssueActivityCommentRoot
               projectId={projectId}
@@ -144,6 +151,7 @@ export const IssueActivity = observer(function IssueActivity(props: TIssueActivi
               disabled={disabled}
               sortOrder={sortOrder || E_SORT_ORDER.ASC}
             />
+            {(disabled || sortOrder === E_SORT_ORDER.ASC) && worklogBlock}
             {!disabled && sortOrder === E_SORT_ORDER.ASC && renderCommentCreationBox}
           </div>
         </div>

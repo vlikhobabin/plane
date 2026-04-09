@@ -50,10 +50,10 @@ Implemented already:
 - guest provisioning and welcome-email flow ported into Django
 - native instance-admin guest-user API and `apps/admin` guest-user page added
 - native auth-page customization replaces `auth-patch.js`
+- native worklog block and "Факт" property row replace `worklog-helper.js`
 
 Not ported yet:
 
-- worklog frontend and the "Факт" issue property row
 - local host-run development workflow and cutover from `/opt/plane-fork` to `/opt/plane`
 
 ## Principles
@@ -83,7 +83,6 @@ Still pending:
 
 Still pending:
 
-- native replacement for `extensions/fastapi/static/worklog-helper.js`
 - removal of `patches/plane-web/nginx.conf` injection dependency
 
 Likely target areas already present in the fork:
@@ -287,6 +286,7 @@ Exit criteria for Phase 2:
 - no dependency on `worklog-helper.js`
 - no dependency on nginx `sub_filter`
 - issue detail worklog UI works in native frontend code
+- status: functionally completed in the fork, with final overlay/nginx cleanup deferred to repository cutover
 
 ## Phase 3: Establish Host-Run Local Development
 
@@ -487,22 +487,22 @@ After cutover:
 
 ## Immediate Next Step
 
-Start with `migration/worklog-frontend-native-port`.
+Start with `migration/local-dev-host-run`.
 
 Why first:
 
-- backend parity for guest provisioning and admin flow is already in place
-- auth-page customization is already native
-- the remaining visible dependency on overlay UI is the worklog block and "Факт" property rendering
+- backend and frontend parity needed for day-to-day work is now in place inside the fork
+- the next risk is no longer missing product behavior, but developer ergonomics and environment bootstrap
+- host-run development is the precondition for safely replacing `/opt/plane`
 
 Concrete implementation slice:
 
-- replace `worklog-helper.js` with native issue-detail components
-- connect the UI to the Django worklog endpoints already living in `apps/api`
-- keep `/ext/api/...` only as a short transitional compatibility layer if needed during rollout
+- create documented local Python and `pnpm` bootstrap in the fork
+- add a minimal developer entry layer for API, worker, beat, web, admin, and live
+- point the fork at existing PostgreSQL/Redis/RabbitMQ infrastructure without relying on Plane app containers
 
 After that:
 
-- bootstrap host-run local development
 - validate the fork against the existing dev database
 - perform the controlled `/opt/plane-fork` -> `/opt/plane` cutover
+- retire the old overlay workflow
