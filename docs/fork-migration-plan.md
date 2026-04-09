@@ -39,7 +39,7 @@ Current architecture:
 
 Current fork workspace:
 
-- `/opt/plane-fork`
+- `/opt/plane`
 
 Implemented already:
 
@@ -59,7 +59,6 @@ Implemented already:
 
 Not ported yet:
 
-- final cutover from `/opt/plane-fork` to `/opt/plane`
 - retirement of the old overlay repository and its application containers
 
 ## Principles
@@ -111,7 +110,6 @@ Implemented in the fork:
 
 Still pending:
 
-- cutover from `/opt/plane-fork` to `/opt/plane`
 - retirement of old local Plane application containers
 
 Validated already:
@@ -428,10 +426,8 @@ Preconditions:
 Cutover sequence:
 
 1. Stop using `/opt/plane` as the active development workspace.
-2. Archive the old overlay repository outside the main working path.
-   Suggested path:
-   - `/opt/archive/plane-overlay-YYYY-MM-DD`
-3. Move `/opt/plane-fork` to `/opt/plane`.
+2. Remove the old overlay repository from the active working path after the fork is verified.
+3. Move the fork workspace into `/opt/plane`.
 4. Reconfigure the local git remote so `/opt/plane` tracks only `git@github.com:vlikhobabin/plane.git`.
 5. Set the primary branch to `main` or the chosen long-term default branch.
 6. Recreate local venv and env files in the final path if absolute paths changed.
@@ -451,8 +447,8 @@ Validation checklist:
 Exit criteria for Phase 5:
 
 - `/opt/plane` is the only active Plane code workspace on the server
-- `/opt/plane-fork` no longer exists as a separate active repo
-- old overlay is archived, not live
+- the old fork staging path no longer exists as a separate active repo
+- old overlay is removed from the active local development path
 
 ## Phase 6: Retire Overlay Architecture
 
@@ -509,22 +505,10 @@ After cutover:
 
 ## Immediate Next Step
 
-Start with `migration/local-dev-host-run`.
+Local cutover is complete.
 
-Why first:
+Next operational slice:
 
-- backend and frontend parity needed for day-to-day work is now in place inside the fork
-- the next risk is no longer missing product behavior, but developer ergonomics and environment bootstrap
-- host-run development is the precondition for safely replacing `/opt/plane`
-
-Concrete implementation slice:
-
-- create documented local Python and `pnpm` bootstrap in the fork
-- add a minimal developer entry layer for API, worker, beat, web, admin, and live
-- point the fork at existing PostgreSQL/Redis/RabbitMQ infrastructure without relying on Plane app containers
-
-After that:
-
-- validate the fork against the existing dev database
-- perform the controlled `/opt/plane-fork` -> `/opt/plane` cutover
-- retire the old overlay workflow
+- create `main` from the integrated migration line if it is not already the primary branch
+- remove or ignore the remaining overlay-only deployment lineage
+- keep production deployment work separate from local host-run development

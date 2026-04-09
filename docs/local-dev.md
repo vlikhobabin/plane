@@ -4,8 +4,7 @@ This repository now supports a host-run development workflow for Plane applicati
 
 Current intended layout during migration:
 
-- repository: `/opt/plane-fork`
-- future cutover target: `/opt/plane`
+- repository: `/opt/plane`
 - application code: runs directly from source on the host
 - infrastructure services: PostgreSQL, Redis, RabbitMQ, and optional local MinIO via Docker
 
@@ -31,10 +30,10 @@ The goal is:
 
 ## Files Added For Host-Run Dev
 
-- [Makefile](/opt/plane-fork/Makefile)
-- [docker-compose.infra.yml](/opt/plane-fork/docker-compose.infra.yml)
-- [.env.host-run.example](/opt/plane-fork/.env.host-run.example)
-- [apps/api/.env.host-run.example](/opt/plane-fork/apps/api/.env.host-run.example)
+- [Makefile](/opt/plane/Makefile)
+- [docker-compose.infra.yml](/opt/plane/docker-compose.infra.yml)
+- [.env.host-run.example](/opt/plane/.env.host-run.example)
+- [apps/api/.env.host-run.example](/opt/plane/apps/api/.env.host-run.example)
 
 ## First-Time Setup
 
