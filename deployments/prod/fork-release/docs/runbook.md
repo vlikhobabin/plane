@@ -8,7 +8,7 @@ It is intentionally focused on `Phase 0` safety work and the first release cutov
 
 ## Directory Assumptions
 
-This template assumes a future production deploy directory shaped roughly like:
+This template assumes a production deploy directory shaped roughly like:
 
 ```text
 /opt/plane-prod
@@ -74,6 +74,7 @@ Run:
 Expected result:
 
 - a timestamped directory is created under `SNAPSHOT_DIR`
+- a fresh `plane_*.sql.gz` backup is created under `BACKUP_DIR`
 - it contains:
   - env snapshot
   - compose snapshot
@@ -82,6 +83,7 @@ Expected result:
   - container inspect outputs
   - docker inventory
   - database baseline row counts
+  - the backup script output for the dump created during the snapshot
 
 ## Restore Drill
 
@@ -110,10 +112,11 @@ For the first production release cutover, the intended sequence is:
 3. Record the current release image IDs.
 4. Update `IMAGE_TAG`.
 5. Pull the new tagged images.
-6. Run database migrations.
-7. Start the new application stack.
-8. Run smoke checks.
-9. If the release fails, execute the appropriate rollback path.
+6. Run database migrations against the existing prod database.
+7. Remove only the legacy application containers.
+8. Start the new application stack on the existing runtime network.
+9. Run smoke checks.
+10. If the release fails, execute the appropriate rollback path.
 
 Template helper:
 
@@ -168,6 +171,7 @@ Action:
 - These files are templates, not proof that production is already migrated.
 - Any final production script paths can still be adjusted when the real deploy directory is created.
 - The first cutover should preserve the current ingress shape and data plane.
+- The first cutover should reuse the existing `plane-db`, `plane-redis`, `plane-mq`, and `prod_plane-net`.
 - The manual GitHub deploy workflow expects:
   - `PLANE_PROD_DEPLOY_SSH_KEY`
   - `PLANE_PROD_DEPLOY_HOST`

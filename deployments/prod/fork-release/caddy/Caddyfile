@@ -12,7 +12,7 @@
   }
 
   redir /spaces /spaces/ permanent
-  handle_path /spaces/* {
+  handle /spaces* {
     reverse_proxy space:3000
   }
 

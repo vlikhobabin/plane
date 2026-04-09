@@ -10,6 +10,7 @@ What this template is for:
 - GHCR image tags owned by `vlikhobabin/plane`
 - external S3 storage
 - pre-release safety operations
+- first-cutover replacement of application containers only
 
 What this template is not:
 
@@ -36,4 +37,5 @@ Recommended adoption flow:
 2. Validate `docker-compose.prod.yml` against the real prod environment.
 3. Put the scripts on the production server.
 4. Complete `Phase 0` from `docs/prod-migration-plan.md`.
-5. Only then use this template for staging or cutover work.
+5. Point the runtime at the existing external Docker network and infra containers.
+6. Only then use this template for staging or cutover work.
