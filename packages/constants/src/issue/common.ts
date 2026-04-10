@@ -156,6 +156,27 @@ export const ISSUE_DISPLAY_PROPERTIES_KEYS: (keyof IIssueDisplayProperties)[] = 
   "modules",
   "cycle",
   "issue_type",
+  "fact",
+];
+
+export const ISSUE_SPREADSHEET_DISPLAY_PROPERTIES_KEYS: (keyof IIssueDisplayProperties)[] = [
+  "assignee",
+  "start_date",
+  "due_date",
+  "labels",
+  "key",
+  "priority",
+  "state",
+  "sub_issue_count",
+  "link",
+  "attachment_count",
+  "estimate",
+  "created_on",
+  "updated_on",
+  "modules",
+  "cycle",
+  "issue_type",
+  "fact",
 ];
 
 export const SUB_ISSUES_DISPLAY_PROPERTIES_KEYS: (keyof IIssueDisplayProperties)[] = [
@@ -206,6 +227,10 @@ export const ISSUE_DISPLAY_PROPERTIES: {
     key: "estimate",
     titleTranslationKey: "common.estimate",
   },
+  {
+    key: "fact",
+    titleTranslationKey: "issue.display.properties.fact",
+  },
   { key: "modules", titleTranslationKey: "common.module" },
   { key: "cycle", titleTranslationKey: "common.cycle" },
 ];
@@ -220,6 +245,7 @@ export const SPREADSHEET_PROPERTY_LIST: (keyof IIssueDisplayProperties)[] = [
   "start_date",
   "due_date",
   "estimate",
+  "fact",
   "created_on",
   "updated_on",
   "link",
@@ -268,6 +294,14 @@ export const SPREADSHEET_PROPERTY_DETAILS: {
     descendingOrderKey: "-estimate_point__key",
     descendingOrderTitle: "High",
     icon: "EstimatePropertyIcon",
+  },
+  fact: {
+    i18n_title: "issue.display.properties.fact",
+    ascendingOrderKey: "-updated_at",
+    ascendingOrderTitle: "New",
+    descendingOrderKey: "updated_at",
+    descendingOrderTitle: "Old",
+    icon: "TimelineLayoutIcon",
   },
   labels: {
     i18n_title: "common.labels",

@@ -770,6 +770,7 @@ class IssueSerializer(DynamicBaseSerializer):
     sub_issues_count = serializers.IntegerField(read_only=True)
     attachment_count = serializers.IntegerField(read_only=True)
     link_count = serializers.IntegerField(read_only=True)
+    actual_hours = serializers.FloatField(read_only=True)
 
     class Meta:
         model = Issue
@@ -797,6 +798,7 @@ class IssueSerializer(DynamicBaseSerializer):
             "updated_by",
             "attachment_count",
             "link_count",
+            "actual_hours",
             "is_draft",
             "archived_at",
         ]
@@ -857,6 +859,7 @@ class IssueListDetailSerializer(serializers.Serializer):
             "sub_issues_count": instance.sub_issues_count,
             "attachment_count": instance.attachment_count,
             "link_count": instance.link_count,
+            "actual_hours": instance.actual_hours,
         }
 
         # Handle expanded fields only when requested - using direct field access

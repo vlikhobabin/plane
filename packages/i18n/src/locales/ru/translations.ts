@@ -1038,6 +1038,7 @@ export default {
         label: "Отображаемые свойства",
         id: "ID",
         issue_type: "Тип рабочего элемента",
+        fact: "Факт",
         sub_issue_count: "Количество подэлементов",
         attachment_count: "Количество вложений",
         created_on: "Дата создания",

@@ -39,6 +39,7 @@ def get_default_properties():
         "link": True,
         "attachment_count": True,
         "estimate": True,
+        "fact": False,
         "created_on": True,
         "updated_on": True,
     }
@@ -77,6 +78,7 @@ def get_default_display_properties():
         "created_on": True,
         "due_date": True,
         "estimate": True,
+        "fact": False,
         "key": True,
         "labels": True,
         "link": True,

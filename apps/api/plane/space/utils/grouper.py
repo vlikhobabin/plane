@@ -93,6 +93,7 @@ def issue_on_results(
         "project_id",
         "parent_id",
         "cycle_id",
+        "actual_hours",
         "created_by",
         "state__group",
     ]

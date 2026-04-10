@@ -57,6 +57,7 @@ export type TBaseIssue = {
   sub_issues_count: number;
   attachment_count: number;
   link_count: number;
+  actual_hours?: number | null;
 
   project_id: string | null;
   parent_id: string | null;

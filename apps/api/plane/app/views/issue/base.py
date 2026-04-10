@@ -14,11 +14,13 @@ from django.db.models import (
     Count,
     Exists,
     F,
+    FloatField,
     Func,
     OuterRef,
     Prefetch,
     Q,
     Subquery,
+    Sum,
     UUIDField,
     Value,
 )
@@ -55,6 +57,7 @@ from plane.db.models import (
     IssueReaction,
     IssueRelation,
     IssueSubscriber,
+    IssueWorkLog,
     ProjectUserProperty,
     ModuleIssue,
     Project,
@@ -75,6 +78,19 @@ from plane.utils.paginator import GroupedOffsetPaginator, SubGroupedOffsetPagina
 from plane.utils.timezone_converter import user_timezone_converter
 
 from .. import BaseAPIView, BaseViewSet
+
+
+def get_actual_hours_annotation():
+    return Coalesce(
+        Subquery(
+            IssueWorkLog.objects.filter(issue=OuterRef("id"))
+            .values("issue")
+            .annotate(total_hours=Sum("hours"))
+            .values("total_hours")[:1],
+            output_field=FloatField(),
+        ),
+        Value(0.0),
+    )
 
 
 class IssueListEndpoint(BaseAPIView):
@@ -134,6 +150,7 @@ class IssueListEndpoint(BaseAPIView):
                 .annotate(count=Func(F("id"), function="Count"))
                 .values("count")
             )
+            .annotate(actual_hours=get_actual_hours_annotation())
             .distinct()
         )
 
@@ -183,6 +200,7 @@ class IssueListEndpoint(BaseAPIView):
                 "updated_by",
                 "attachment_count",
                 "link_count",
+                "actual_hours",
                 "is_draft",
                 "archived_at",
                 "deleted_at",
@@ -244,6 +262,7 @@ class IssueViewSet(BaseViewSet):
                     .values("count")
                 )
             )
+            .annotate(actual_hours=get_actual_hours_annotation())
         )
 
         return issues
@@ -515,6 +534,7 @@ class IssueViewSet(BaseViewSet):
                     .values("count")
                 )
             )
+            .annotate(actual_hours=get_actual_hours_annotation())
             .annotate(
                 label_ids=Coalesce(
                     Subquery(
@@ -837,6 +857,7 @@ class IssuePaginatedViewSet(BaseViewSet):
                     .values("count")
                 )
             )
+            .annotate(actual_hours=get_actual_hours_annotation())
         )
 
     def process_paginated_result(self, fields, results, timezone):
@@ -882,6 +903,7 @@ class IssuePaginatedViewSet(BaseViewSet):
             "link_count",
             "attachment_count",
             "sub_issues_count",
+            "actual_hours",
         ]
 
         if str(is_description_required).lower() == "true":
@@ -991,6 +1013,7 @@ class IssueDetailEndpoint(BaseAPIView):
                 .annotate(count=Func(F("id"), function="Count"))
                 .values("count")
             )
+            .annotate(actual_hours=get_actual_hours_annotation())
             .prefetch_related(
                 Prefetch(
                     "issue_assignee",
@@ -1244,6 +1267,7 @@ class IssueDetailIdentifierEndpoint(BaseAPIView):
                 .annotate(count=Func(F("id"), function="Count"))
                 .values("count")
             )
+            .annotate(actual_hours=get_actual_hours_annotation())
             .filter(sequence_id=issue_identifier)
             .annotate(
                 label_ids=Coalesce(

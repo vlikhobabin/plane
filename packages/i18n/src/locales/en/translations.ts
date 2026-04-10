@@ -862,6 +862,7 @@ export default {
         label: "Display Properties",
         id: "ID",
         issue_type: "Work item Type",
+        fact: "Actual",
         sub_issue_count: "Sub-work item count",
         attachment_count: "Attachment count",
         created_on: "Created on",
