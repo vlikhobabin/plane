@@ -27,10 +27,36 @@ Owner:
 
 The production release unit is a git tag in the fork repository.
 
-Recommended format:
+Current versioning format:
 
-- `v1.3.0-mw.1`
-- `v1.3.0-mw.2`
+- `v<plane-upstream>-mw.<major>.<minor>.<patch>`
+
+Examples:
+
+- `v1.3.1-mw.1.0.0`
+- `v1.3.1-mw.1.3.45`
+
+Component rules:
+
+- `v1.3.1`:
+  - exact upstream Plane version this fork release is based on
+- `-mw.`:
+  - fork namespace prefix
+- `major`:
+  - breaking or architectural fork-level release line
+- `minor`:
+  - normal feature release within the current fork major line
+- `patch`:
+  - hotfixes and small corrections within the current fork major/minor line
+
+Legacy transitional tags exist in the repository:
+
+- `v1.3.1-mw.0`
+- `v1.3.1-mw.1`
+- `v1.3.1-mw.2`
+- `v1.3.1-mw.3`
+
+These should be treated as historical migration-era tags. New releases should use the full `major.minor.patch` fork suffix.
 
 The exact release tag is the deployment selector used by production as `IMAGE_TAG`.
 
@@ -75,7 +101,7 @@ Image-to-service mapping:
 
 Minimum tags published for each image:
 
-- exact release tag, for example `v1.3.0-mw.1`
+- exact release tag, for example `v1.3.1-mw.1.0.0`
 - immutable commit tag, for example `sha-<shortsha>`
 
 Production deploys must use the exact release tag, not the commit tag.

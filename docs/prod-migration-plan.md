@@ -88,9 +88,10 @@ Tasks:
   - either use stock `caddy` with a committed Caddyfile
   - or build a small fork-owned proxy image
 - stop depending on `makeplane/plane-proxy`
-- define a release-tag naming scheme, for example:
-  - `v1.3.0-mw.1`
-  - `v1.3.0-mw.2`
+- define and document the release-tag naming scheme:
+  - `v<plane-upstream>-mw.<major>.<minor>.<patch>`
+  - for example `v1.3.1-mw.1.0.0`
+  - for example `v1.3.1-mw.1.3.45`
 
 Exit criteria:
 

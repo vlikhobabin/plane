@@ -107,7 +107,7 @@ This minimizes risk by separating "new application build model" from "new ingres
 
 ## Target Compose Shape
 
-The production stack should be driven by a single pinned release tag such as `v1.3.0-mw.1`.
+The production stack should be driven by a single pinned release tag such as `v1.3.1-mw.1.0.0`.
 
 Expected service layout:
 
@@ -175,6 +175,14 @@ This avoids mixing app-layer migration with ingress simplification in the same r
 After the stack is stable, ingress can be simplified in a later phase if desired.
 
 ## Release Model
+
+Recommended release tag format:
+
+- `v<plane-upstream>-mw.<major>.<minor>.<patch>`
+
+Example:
+
+- `v1.3.1-mw.1.0.0`
 
 Recommended release flow:
 

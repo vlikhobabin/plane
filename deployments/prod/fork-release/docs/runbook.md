@@ -123,7 +123,7 @@ For the first production release cutover, the intended sequence is:
 Template helper:
 
 ```bash
-./scripts/deploy-release.sh v1.3.0-mw.1
+./scripts/deploy-release.sh v1.3.1-mw.1.0.0
 ```
 
 ## Smoke Checks
