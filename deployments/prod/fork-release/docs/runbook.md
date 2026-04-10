@@ -117,7 +117,7 @@ For the first production release cutover, the intended sequence is:
 6. Run database migrations against the existing prod database.
 7. Remove only the legacy application containers.
 8. Start the new application stack on the existing runtime network.
-9. Run smoke checks.
+9. Wait for bounded release healthcheck retries to pass.
 10. If the release fails, execute the appropriate rollback path.
 
 Template helper:
@@ -175,6 +175,7 @@ Action:
 - The first cutover should preserve the current ingress shape and data plane.
 - The first cutover should reuse the existing `plane-db`, `plane-redis`, `plane-mq`, and `prod_plane-net`.
 - `docker-compose.infra.yml` should remain in `/opt/plane-prod` as the infra source of truth even if infra containers are not recreated immediately.
+- `RELEASE_HEALTHCHECK_RETRIES` and `RELEASE_HEALTHCHECK_INTERVAL` can be tuned in `.env` if app warm-up is slower on the production host.
 - The manual GitHub deploy workflow expects:
   - `PLANE_PROD_DEPLOY_SSH_KEY`
   - `PLANE_PROD_DEPLOY_HOST`

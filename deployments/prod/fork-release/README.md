@@ -11,6 +11,7 @@ What this template is for:
 - external S3 storage
 - pre-release safety operations
 - first-cutover replacement of application containers only
+- bounded healthcheck retries during release warm-up
 
 What this template is not:
 
