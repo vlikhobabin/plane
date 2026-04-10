@@ -139,6 +139,8 @@ Minimum smoke checks after startup:
 - worklogs render
 - mail sending path is functional
 
+Use `post-release-checklist.md` to record the actual release tag, deploy run, backup, snapshot, and acceptance result for each production rollout.
+
 ## Rollback Modes
 
 ### App Rollback

@@ -32,6 +32,7 @@ Main files:
 - `scripts/release-snapshot.sh`
 - `scripts/restore-db.sh`
 - `docs/runbook.md`
+- `docs/post-release-checklist.md`
 
 Recommended adoption flow:
 
@@ -41,4 +42,5 @@ Recommended adoption flow:
 4. Complete `Phase 0` from `docs/prod-migration-plan.md`.
 5. Point the runtime at the existing external Docker network and infra containers.
 6. Keep infra definitions in `docker-compose.infra.yml` so `/opt/plane-prod` is the operational source of truth.
-7. Only then use this template for staging or cutover work.
+7. Use `docs/post-release-checklist.md` after each production rollout.
+8. Only then use this template for staging or cutover work.
