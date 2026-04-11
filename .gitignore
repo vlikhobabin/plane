@@ -110,3 +110,15 @@ build/
 .react-router/
 temp/
 scripts/
+
+# Local debugging artifacts
+/.codex/
+/.playwright-mcp/
+/*.log
+/*.png
+/*snapshot*.md
+/current-root.md
+/display-open.md
+/issue-page-authcheck.md
+/playwright-*.md
+/project-issues-page.md
