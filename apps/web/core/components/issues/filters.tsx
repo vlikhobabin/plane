@@ -6,20 +6,24 @@
 
 import { useCallback, useState } from "react";
 import { observer } from "mobx-react";
-import { ChartNoAxesColumn, SlidersHorizontal } from "lucide-react";
+import { ChartNoAxesColumn, ChevronDown, SlidersHorizontal } from "lucide-react";
 // plane imports
 import { EIssueFilterType, ISSUE_STORE_TO_FILTERS_MAP } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
-import { Button } from "@plane/propel/button";
+import { Button, getButtonStyling } from "@plane/propel/button";
 import type { IIssueDisplayFilterOptions, IIssueDisplayProperties } from "@plane/types";
 import { EIssueLayoutTypes, EIssuesStoreType } from "@plane/types";
+import { CustomMenu } from "@plane/ui";
 // hooks
+import { useWorkItemFilterInstance } from "@/hooks/store/work-item-filters/use-work-item-filter-instance";
 import { useIssues } from "@/hooks/store/use-issues";
 // plane web imports
 import type { TProject } from "@/plane-web/types";
+import { ProjectExportService } from "@/services/project/project-export.service";
 // local imports
 import { WorkItemsModal } from "../analytics/work-items/modal";
 import { WorkItemFiltersToggle } from "../work-item-filters/filters-toggle";
+import { exportProjectIssueListXlsx } from "./export/project-issue-list-xlsx";
 import {
   DisplayFiltersSelection,
   FiltersDropdown,
@@ -41,6 +45,7 @@ const LAYOUTS = [
   EIssueLayoutTypes.SPREADSHEET,
   EIssueLayoutTypes.GANTT,
 ];
+const projectExportService = new ProjectExportService();
 
 export const HeaderFilters = observer(function HeaderFilters(props: Props) {
   const {
@@ -54,13 +59,17 @@ export const HeaderFilters = observer(function HeaderFilters(props: Props) {
   const { t } = useTranslation();
   // states
   const [analyticsModal, setAnalyticsModal] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   // store hooks
   const { issuesFilter } = useIssues(storeType);
   const { issueFilters, updateFilters } = issuesFilter;
+  const filterInstance = useWorkItemFilterInstance(storeType, projectId);
   const scopedIssueFilters = projectId ? issuesFilter.getIssueFilters(projectId) : issueFilters;
+  const appliedFilters = projectId ? issuesFilter.appliedFilters : undefined;
   // derived values
   const activeLayout = scopedIssueFilters?.displayFilters?.layout;
   const layoutDisplayFiltersOptions = ISSUE_STORE_TO_FILTERS_MAP[storeType]?.layoutOptions[activeLayout];
+  const canExportProjectIssueList = storeType === EIssuesStoreType.PROJECT && Boolean(workspaceSlug && projectId);
 
   const handleLayoutChange = useCallback(
     (layout: EIssueLayoutTypes) => {
@@ -85,6 +94,40 @@ export const HeaderFilters = observer(function HeaderFilters(props: Props) {
     },
     [workspaceSlug, projectId, updateFilters]
   );
+
+  const handleExport = useCallback(async () => {
+    if (!workspaceSlug || !projectId || !canExportProjectIssueList || isExporting) return;
+
+    setIsExporting(true);
+    try {
+      await exportProjectIssueListXlsx({
+        workspaceSlug,
+        projectId,
+        projectIdentifier: currentProjectDetails?.identifier,
+        displayFilters: scopedIssueFilters?.displayFilters,
+        displayProperties: scopedIssueFilters?.displayProperties,
+        richFilters: scopedIssueFilters?.richFilters,
+        appliedFilters,
+        filterInstance,
+        projectExportService,
+        t,
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  }, [
+    workspaceSlug,
+    projectId,
+    canExportProjectIssueList,
+    isExporting,
+    currentProjectDetails?.identifier,
+    scopedIssueFilters?.displayFilters,
+    scopedIssueFilters?.displayProperties,
+    scopedIssueFilters?.richFilters,
+    appliedFilters,
+    filterInstance,
+    t,
+  ]);
 
   return (
     <>
@@ -135,6 +178,24 @@ export const HeaderFilters = observer(function HeaderFilters(props: Props) {
       ) : (
         <></>
       )}
+      {canExportProjectIssueList ? (
+        <CustomMenu
+          closeOnSelect
+          disabled={isExporting}
+          placement="bottom-end"
+          customButtonClassName={`${getButtonStyling("secondary", "lg")} gap-1.5`}
+          customButton={
+            <>
+              <span>{t("more")}</span>
+              <ChevronDown className="size-3" />
+            </>
+          }
+        >
+          <CustomMenu.MenuItem onClick={handleExport}>
+            {isExporting ? `${t("export_to_xlsx")}...` : t("export_to_xlsx")}
+          </CustomMenu.MenuItem>
+        </CustomMenu>
+      ) : null}
     </>
   );
 });

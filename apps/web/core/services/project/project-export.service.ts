@@ -5,9 +5,20 @@
  */
 
 import { API_BASE_URL } from "@plane/constants";
-import type { TWorkItemFilterExpression } from "@plane/types";
+import type {
+  IIssueDisplayFilterOptions,
+  IIssueDisplayProperties,
+  TIssueLayouts,
+  TIssueParams,
+  TWorkItemFilterExpression,
+} from "@plane/types";
 import { APIService } from "@/services/api.service";
 // helpers
+
+type TProjectIssueListXlsxExportColumn = {
+  key: string;
+  label: string;
+};
 
 export class ProjectExportService extends APIService {
   constructor() {
@@ -28,5 +39,23 @@ export class ProjectExportService extends APIService {
       .catch((error) => {
         throw error?.response?.data;
       });
+  }
+
+  async downloadProjectIssueListXlsx(
+    workspaceSlug: string,
+    projectId: string,
+    data: {
+      layout: TIssueLayouts;
+      rich_filters?: TWorkItemFilterExpression;
+      applied_filters?: Partial<Record<TIssueParams, string | boolean>>;
+      display_filters?: IIssueDisplayFilterOptions;
+      display_properties?: IIssueDisplayProperties;
+      columns: TProjectIssueListXlsxExportColumn[];
+      filter_summary: string[];
+    }
+  ) {
+    return this.post(`/api/workspaces/${workspaceSlug}/projects/${projectId}/issues/export/xlsx/`, data, {
+      responseType: "blob",
+    });
   }
 }

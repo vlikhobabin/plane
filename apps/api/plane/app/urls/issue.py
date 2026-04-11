@@ -15,6 +15,7 @@ from plane.app.views import (
     IssueArchiveViewSet,
     IssueCommentViewSet,
     IssueListEndpoint,
+    ProjectIssueListXlsxExportEndpoint,
     IssueReactionViewSet,
     IssueRelationViewSet,
     IssueSubscriberViewSet,
@@ -42,6 +43,11 @@ urlpatterns = [
         "workspaces/<str:slug>/projects/<uuid:project_id>/issues/list/",
         IssueListEndpoint.as_view(),
         name="project-issue",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/issues/export/xlsx/",
+        ProjectIssueListXlsxExportEndpoint.as_view(),
+        name="project-issue-export-xlsx",
     ),
     path(
         "workspaces/<str:slug>/projects/<uuid:project_id>/issues/",

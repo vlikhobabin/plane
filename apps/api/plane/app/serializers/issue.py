@@ -48,6 +48,29 @@ from plane.utils.content_validator import (
     validate_binary_data,
 )
 
+PROJECT_ISSUE_LIST_XLSX_EXPORT_LAYOUT_CHOICES = (
+    ("list", "list"),
+    ("kanban", "kanban"),
+    ("calendar", "calendar"),
+    ("spreadsheet", "spreadsheet"),
+    ("gantt_chart", "gantt_chart"),
+)
+
+
+class ProjectIssueListXlsxExportColumnSerializer(serializers.Serializer):
+    key = serializers.CharField()
+    label = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+
+
+class ProjectIssueListXlsxExportSerializer(serializers.Serializer):
+    layout = serializers.ChoiceField(choices=PROJECT_ISSUE_LIST_XLSX_EXPORT_LAYOUT_CHOICES)
+    rich_filters = serializers.JSONField(required=False, allow_null=True)
+    applied_filters = serializers.JSONField(required=False, allow_null=True)
+    display_filters = serializers.JSONField(required=False, allow_null=True)
+    display_properties = serializers.JSONField(required=False, allow_null=True)
+    columns = ProjectIssueListXlsxExportColumnSerializer(many=True, required=False)
+    filter_summary = serializers.ListField(child=serializers.CharField(), required=False)
+
 
 class IssueFlatSerializer(BaseSerializer):
     ## Contain only flat fields

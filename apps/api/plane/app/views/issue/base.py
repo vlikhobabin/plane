@@ -4,12 +4,14 @@
 
 # Python imports
 import copy
+import io
 import json
 
 # Django imports
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.fields import ArrayField
 from django.core.serializers.json import DjangoJSONEncoder
+from django.http import HttpResponse
 from django.db.models import (
     Count,
     Exists,
@@ -27,9 +29,11 @@ from django.db.models import (
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 from django.utils.decorators import method_decorator
+from django.utils.text import slugify
 from django.views.decorators.gzip import gzip_page
 
 # Third Party imports
+from openpyxl import Workbook
 from rest_framework import status
 from rest_framework.response import Response
 
@@ -41,6 +45,7 @@ from plane.app.serializers import (
     IssueListDetailSerializer,
     IssueSerializer,
     ProjectUserPropertySerializer,
+    ProjectIssueListXlsxExportSerializer,
 )
 from plane.bgtasks.issue_activities_task import issue_activity
 from plane.bgtasks.issue_description_version_task import issue_description_version_task
@@ -76,6 +81,7 @@ from plane.utils.grouper import (
     issue_queryset_grouper,
 )
 from plane.utils.host import base_host
+from plane.utils.exporters.schemas import ProjectIssueListExportSchema
 from plane.utils.issue_filters import issue_filters
 from plane.utils.order_queryset import order_issue_queryset
 from plane.utils.paginator import GroupedOffsetPaginator, SubGroupedOffsetPaginator
@@ -105,6 +111,148 @@ def get_actual_hours_annotation(worklog_date_range=None):
         ),
         Value(0.0),
     )
+
+
+def apply_issue_queryset_annotations(issues, worklog_date_range=None):
+    return (
+        issues.annotate(
+            cycle_id=Subquery(
+                CycleIssue.objects.filter(issue=OuterRef("id"), deleted_at__isnull=True).values("cycle_id")[:1]
+            )
+        )
+        .annotate(
+            link_count=Subquery(
+                IssueLink.objects.filter(issue=OuterRef("id"))
+                .values("issue")
+                .annotate(count=Count("id"))
+                .values("count")
+            )
+        )
+        .annotate(
+            attachment_count=Subquery(
+                FileAsset.objects.filter(
+                    issue_id=OuterRef("id"),
+                    entity_type=FileAsset.EntityTypeContext.ISSUE_ATTACHMENT,
+                )
+                .values("issue_id")
+                .annotate(count=Count("id"))
+                .values("count")
+            )
+        )
+        .annotate(
+            sub_issues_count=Subquery(
+                Issue.issue_objects.filter(parent=OuterRef("id"))
+                .values("parent")
+                .annotate(count=Count("id"))
+                .values("count")
+            )
+        )
+        .annotate(actual_hours=get_actual_hours_annotation(worklog_date_range))
+    )
+
+
+PROJECT_ISSUE_LIST_EXPORT_FILENAME_SUFFIX = "work-items"
+PROJECT_ISSUE_LIST_EXPORT_COLUMN_ORDER = (
+    "name",
+    "key",
+    "state",
+    "priority",
+    "assignee",
+    "labels",
+    "start_date",
+    "due_date",
+    "estimate",
+    "fact",
+    "modules",
+    "cycle",
+    "issue_type",
+    "created_on",
+    "updated_on",
+    "link",
+    "attachment_count",
+    "sub_issue_count",
+)
+PROJECT_ISSUE_LIST_EXPORT_ALWAYS_ON_COLUMNS = ("name", "key")
+PROJECT_ISSUE_LIST_EXPORT_CALENDAR_GANTT_COLUMNS = ("name", "key", "start_date", "due_date")
+
+
+def normalize_project_issue_export_columns(layout, requested_columns=None):
+    requested_columns = requested_columns or []
+    requested_labels = {
+        column.get("key"): column.get("label")
+        for column in requested_columns
+        if column.get("key") in ProjectIssueListExportSchema._declared_fields
+    }
+    requested_keys = [column.get("key") for column in requested_columns if column.get("key") in requested_labels]
+
+    if layout in ("calendar", "gantt_chart"):
+        selected_keys = list(PROJECT_ISSUE_LIST_EXPORT_CALENDAR_GANTT_COLUMNS)
+    else:
+        selected_keys = []
+        for key in [*PROJECT_ISSUE_LIST_EXPORT_ALWAYS_ON_COLUMNS, *requested_keys]:
+            if key not in selected_keys:
+                selected_keys.append(key)
+        selected_keys = [key for key in PROJECT_ISSUE_LIST_EXPORT_COLUMN_ORDER if key in selected_keys]
+
+    return [
+        {
+            "key": key,
+            "label": requested_labels.get(key)
+            or ProjectIssueListExportSchema._declared_fields[key].label
+            or key.replace("_", " ").title(),
+        }
+        for key in selected_keys
+    ]
+
+
+def generate_project_issue_export_filename(project):
+    timestamp = timezone.now().strftime("%Y-%m-%d")
+    identifier = slugify(project.identifier or project.name or "project")
+    return f"{identifier or 'project'}-{PROJECT_ISSUE_LIST_EXPORT_FILENAME_SUFFIX}-{timestamp}.xlsx"
+
+
+def normalize_project_issue_export_cell_value(value):
+    if value is None:
+        return ""
+
+    if isinstance(value, (list, tuple, set)):
+        normalized_items = [
+            str(item).strip()
+            for item in value
+            if item not in (None, "")
+        ]
+        return ", ".join(normalized_items)
+
+    if isinstance(value, dict):
+        return json.dumps(value, cls=DjangoJSONEncoder, ensure_ascii=False)
+
+    return value
+
+
+def build_project_issue_list_xlsx_workbook(project, layout, columns, filter_summary, records):
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = "Work items"
+
+    worksheet.append(["Project", project.name])
+    worksheet.append(["Layout", layout])
+
+    summary_lines = filter_summary or ["None"]
+    worksheet.append(["Filters", summary_lines[0]])
+    for line in summary_lines[1:]:
+        worksheet.append(["", line])
+
+    worksheet.append([])
+    worksheet.append([column["label"] for column in columns])
+    for record in records:
+        worksheet.append(
+            [
+                normalize_project_issue_export_cell_value(record.get(column["key"], ""))
+                for column in columns
+            ]
+        )
+
+    return workbook
 
 
 class IssueListEndpoint(BaseAPIView):
@@ -226,6 +374,111 @@ class IssueListEndpoint(BaseAPIView):
         return Response(issues, status=status.HTTP_200_OK)
 
 
+class ProjectIssueListXlsxExportEndpoint(BaseAPIView):
+    filter_backends = (ComplexFilterBackend,)
+    filterset_class = IssueFilterSet
+
+    def _apply_payload_filters(self, request, queryset, rich_filters=None, applied_filters=None):
+        if rich_filters:
+            for backend in list(self.filter_backends):
+                queryset = backend().filter_queryset(request, queryset, self, filter_data=rich_filters)
+
+        legacy_filters = issue_filters(applied_filters or {}, "GET")
+        return queryset.filter(**legacy_filters), legacy_filters
+
+    def _get_export_queryset(self, request, slug, project_id, rich_filters=None, applied_filters=None):
+        project = Project.objects.get(pk=project_id, workspace__slug=slug)
+        worklog_date_range = (
+            get_active_worklog_log_date_range(rich_filters) if can_use_project_issue_worklog_date_filter(request) else None
+        )
+
+        issue_queryset = Issue.issue_objects.filter(project_id=project_id, workspace__slug=slug).distinct()
+        issue_queryset, legacy_filters = self._apply_payload_filters(
+            request=request,
+            queryset=issue_queryset,
+            rich_filters=rich_filters,
+            applied_filters=applied_filters,
+        )
+
+        if (
+            ProjectMember.objects.filter(
+                workspace__slug=slug,
+                project_id=project_id,
+                member=request.user,
+                role=5,
+                is_active=True,
+            ).exists()
+            and not project.guest_view_all_features
+        ):
+            issue_queryset = issue_queryset.filter(created_by=request.user)
+
+        issue_queryset = apply_issue_queryset_annotations(issue_queryset, worklog_date_range=worklog_date_range)
+        issue_queryset, _ = order_issue_queryset(
+            issue_queryset=issue_queryset,
+            order_by_param=(applied_filters or {}).get("order_by", "-created_at"),
+        )
+
+        issue_queryset = issue_queryset.select_related("project", "state", "type", "estimate_point").prefetch_related(
+            Prefetch(
+                "issue_assignee",
+                queryset=IssueAssignee.objects.filter(deleted_at__isnull=True).select_related("assignee"),
+            ),
+            Prefetch(
+                "label_issue",
+                queryset=IssueLabel.objects.filter(deleted_at__isnull=True).select_related("label"),
+            ),
+            Prefetch(
+                "issue_module",
+                queryset=ModuleIssue.objects.filter(deleted_at__isnull=True).select_related("module"),
+            ),
+            Prefetch(
+                "issue_cycle",
+                queryset=CycleIssue.objects.filter(deleted_at__isnull=True).select_related("cycle"),
+            ),
+        )
+
+        return project, issue_queryset, legacy_filters
+
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
+    def post(self, request, slug, project_id):
+        serializer = ProjectIssueListXlsxExportSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        payload = serializer.validated_data
+        layout = payload.get("layout", "list")
+        columns = normalize_project_issue_export_columns(layout, payload.get("columns"))
+        project, issue_queryset, _ = self._get_export_queryset(
+            request=request,
+            slug=slug,
+            project_id=project_id,
+            rich_filters=payload.get("rich_filters"),
+            applied_filters=payload.get("applied_filters"),
+        )
+
+        serialized_records = ProjectIssueListExportSchema.serialize_queryset(
+            issue_queryset,
+            fields=[column["key"] for column in columns],
+        )
+        workbook = build_project_issue_list_xlsx_workbook(
+            project=project,
+            layout=layout,
+            columns=columns,
+            filter_summary=payload.get("filter_summary") or [],
+            records=serialized_records,
+        )
+
+        buffer = io.BytesIO()
+        workbook.save(buffer)
+        buffer.seek(0)
+
+        response = HttpResponse(
+            buffer.getvalue(),
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        response["Content-Disposition"] = f'attachment; filename="{generate_project_issue_export_filename(project)}"'
+        return response
+
+
 class IssueViewSet(BaseViewSet):
     model = Issue
     webhook_event = "issue"
@@ -245,43 +498,7 @@ class IssueViewSet(BaseViewSet):
         return issues
 
     def apply_annotations(self, issues, worklog_date_range=None):
-        issues = (
-            issues.annotate(
-                cycle_id=Subquery(
-                    CycleIssue.objects.filter(issue=OuterRef("id"), deleted_at__isnull=True).values("cycle_id")[:1]
-                )
-            )
-            .annotate(
-                link_count=Subquery(
-                    IssueLink.objects.filter(issue=OuterRef("id"))
-                    .values("issue")
-                    .annotate(count=Count("id"))
-                    .values("count")
-                )
-            )
-            .annotate(
-                attachment_count=Subquery(
-                    FileAsset.objects.filter(
-                        issue_id=OuterRef("id"),
-                        entity_type=FileAsset.EntityTypeContext.ISSUE_ATTACHMENT,
-                    )
-                    .values("issue_id")
-                    .annotate(count=Count("id"))
-                    .values("count")
-                )
-            )
-            .annotate(
-                sub_issues_count=Subquery(
-                    Issue.issue_objects.filter(parent=OuterRef("id"))
-                    .values("parent")
-                    .annotate(count=Count("id"))
-                    .values("count")
-                )
-            )
-            .annotate(actual_hours=get_actual_hours_annotation(worklog_date_range))
-        )
-
-        return issues
+        return apply_issue_queryset_annotations(issues, worklog_date_range=worklog_date_range)
 
     @method_decorator(gzip_page)
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])

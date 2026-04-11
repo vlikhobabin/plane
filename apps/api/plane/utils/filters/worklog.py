@@ -12,7 +12,12 @@ from plane.app.permissions import ROLE
 from plane.db.models import Project, ProjectMember
 
 WORKLOG_LOG_DATE_FILTER_PROPERTY = "worklog_log_date"
-_SUPPORTED_PROJECT_ISSUE_ENDPOINT_SUFFIXES = ("/issues", "/issues-detail", "/issues/list")
+_SUPPORTED_PROJECT_ISSUE_ENDPOINT_SUFFIXES = (
+    "/issues",
+    "/issues-detail",
+    "/issues/list",
+    "/issues/export/xlsx",
+)
 
 
 def parse_worklog_log_date_exact(value: Any) -> date | None:
