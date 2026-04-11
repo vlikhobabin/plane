@@ -88,7 +88,9 @@ export const IssuesHeader = observer(function IssuesHeader() {
               tooltipContent={`There are ${issuesCount} ${issuesCount > 1 ? "work items" : "work item"} in this project`}
               position="bottom"
             >
-              <CountChip count={issuesCount} />
+              <span className="inline-flex">
+                <CountChip count={issuesCount} />
+              </span>
             </Tooltip>
           ) : null}
         </div>

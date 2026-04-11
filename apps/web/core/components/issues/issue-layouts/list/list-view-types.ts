@@ -1,8 +1,22 @@
-import type { TPlacement } from "@plane/propel/utils/placement";
+import type { ReactElement, ReactNode, RefObject } from "react";
 import type { TIssue } from "@plane/types";
 
+type TQuickActionPlacement =
+  | "top"
+  | "top-start"
+  | "top-end"
+  | "bottom"
+  | "bottom-start"
+  | "bottom-end"
+  | "left"
+  | "left-start"
+  | "left-end"
+  | "right"
+  | "right-start"
+  | "right-end";
+
 export interface IQuickActionProps {
-  parentRef: React.RefObject<HTMLElement>;
+  parentRef: RefObject<HTMLElement>;
   issue: TIssue;
   handleDelete: () => Promise<void>;
   handleUpdate?: (data: TIssue) => Promise<void>;
@@ -10,10 +24,10 @@ export interface IQuickActionProps {
   handleArchive?: () => Promise<void>;
   handleRestore?: () => Promise<void>;
   handleMoveToIssues?: () => Promise<void>;
-  customActionButton?: React.ReactElement;
+  customActionButton?: ReactElement;
   portalElement?: HTMLDivElement | null;
   readOnly?: boolean;
-  placements?: TPlacement;
+  placements?: TQuickActionPlacement;
 }
 
 export type TRenderQuickActions = ({
@@ -24,8 +38,8 @@ export type TRenderQuickActions = ({
   portalElement,
 }: {
   issue: TIssue;
-  parentRef: React.RefObject<HTMLElement>;
-  customActionButton?: React.ReactElement;
-  placement?: TPlacement;
+  parentRef: RefObject<HTMLElement>;
+  customActionButton?: ReactElement;
+  placement?: TQuickActionPlacement;
   portalElement?: HTMLDivElement | null;
-}) => React.ReactNode;
+}) => ReactNode;

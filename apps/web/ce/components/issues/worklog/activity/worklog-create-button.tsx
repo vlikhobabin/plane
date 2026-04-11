@@ -19,7 +19,7 @@ export function IssueActivityWorklogCreateButton(props: TIssueActivityWorklogCre
   const { disabled, onClick } = props;
 
   return (
-    <Button variant="secondary" size="md" onClick={onClick} disabled={disabled}>
+    <Button variant="secondary" size="base" onClick={onClick} disabled={disabled}>
       <Clock3 className="h-3.5 w-3.5" />
       <Plus className="-ml-1 h-3 w-3" />
       Учёт времени

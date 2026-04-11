@@ -6,13 +6,15 @@
 
 import React from "react";
 // helpers
-import { Button } from "@plane/propel/button";
 import { Tooltip } from "@plane/propel/tooltip";
 import { cn } from "@plane/utils";
 // types
 import { usePlatformOS } from "@/hooks/use-platform-os";
 import { BACKGROUND_BUTTON_VARIANTS, BORDER_BUTTON_VARIANTS } from "./constants";
 import type { TButtonVariants } from "./types";
+
+const GHOST_BUTTON_CLASSES =
+  "inline-flex h-5 items-center justify-center gap-1 whitespace-nowrap rounded-sm px-1.5 text-caption-md-medium text-secondary transition-colors";
 
 export type DropdownButtonProps = {
   children: React.ReactNode;
@@ -78,11 +80,10 @@ function BorderButton(props: ButtonProps) {
       isMobile={isMobile}
       renderByDefault={renderToolTipByDefault}
     >
-      <Button
-        variant="ghost"
-        size="sm"
+      <div
         className={cn(
-          "flex h-full w-full items-center justify-start gap-1.5 border-[0.5px] border-strong",
+          GHOST_BUTTON_CLASSES,
+          "h-full w-full justify-start border-[0.5px] border-strong",
           {
             "bg-layer-transparent-active": isActive,
           },
@@ -90,7 +91,7 @@ function BorderButton(props: ButtonProps) {
         )}
       >
         {children}
-      </Button>
+      </div>
     </Tooltip>
   );
 }
@@ -106,16 +107,15 @@ function BackgroundButton(props: ButtonProps) {
       isMobile={isMobile}
       renderByDefault={renderToolTipByDefault}
     >
-      <Button
-        variant="ghost"
-        size="sm"
+      <div
         className={cn(
-          "flex h-full w-full items-center justify-between gap-1.5 bg-layer-3 hover:bg-layer-1-hover",
+          GHOST_BUTTON_CLASSES,
+          "h-full w-full justify-between bg-layer-3 hover:bg-layer-1-hover",
           className
         )}
       >
         {children}
-      </Button>
+      </div>
     </Tooltip>
   );
 }
@@ -131,11 +131,10 @@ function TransparentButton(props: ButtonProps) {
       isMobile={isMobile}
       renderByDefault={renderToolTipByDefault}
     >
-      <Button
-        variant="ghost"
-        size="sm"
+      <div
         className={cn(
-          "flex h-full w-full items-center justify-between gap-1.5",
+          GHOST_BUTTON_CLASSES,
+          "h-full w-full justify-between",
           {
             "bg-layer-transparent-active": isActive,
           },
@@ -143,7 +142,7 @@ function TransparentButton(props: ButtonProps) {
         )}
       >
         {children}
-      </Button>
+      </div>
     </Tooltip>
   );
 }

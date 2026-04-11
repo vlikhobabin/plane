@@ -22,6 +22,7 @@ import { useGroupIssuesDragNDrop } from "@/hooks/use-group-dragndrop";
 import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
 import { useIssuesActions } from "@/hooks/use-issues-actions";
 // components
+import { logIssueLayoutFetchError } from "../fetch.utils";
 import { IssueLayoutHOC } from "../issue-layout-HOC";
 import { List } from "./default";
 // types
@@ -87,7 +88,9 @@ export const BaseListRoot = observer(function BaseListRoot(props: IBaseListRoot)
     issuesFilter?.issueFilters?.kanbanFilters || ({ group_by: [], sub_group_by: [] } as TIssueKanbanFilters);
 
   useEffect(() => {
-    fetchIssues("init-loader", { canGroup: true, perPageCount: group_by ? 50 : 100 }, viewId);
+    void fetchIssues("init-loader", { canGroup: true, perPageCount: group_by ? 50 : 100 }, viewId).catch((error) => {
+      logIssueLayoutFetchError("list", error);
+    });
   }, [fetchIssues, storeType, group_by, viewId]);
 
   const groupedIssueIds = issues?.groupedIssueIds as TGroupedIssues | undefined;

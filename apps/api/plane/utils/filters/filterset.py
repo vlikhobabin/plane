@@ -8,7 +8,12 @@ from django.db import models
 from django.db.models import Q
 from django_filters import FilterSet, filters
 
-from plane.db.models import Issue
+from plane.db.models import Issue, IssueWorkLog
+from .worklog import (
+    can_use_project_issue_worklog_date_filter,
+    parse_worklog_log_date_exact,
+    parse_worklog_log_date_range,
+)
 
 
 class UUIDInFilter(filters.BaseInFilter, filters.UUIDFilter):
@@ -156,6 +161,8 @@ class IssueFilterSet(BaseFilterSet):
 
     subscriber_id = filters.UUIDFilter(method="filter_subscriber_id")
     subscriber_id__in = UUIDInFilter(method="filter_subscriber_id_in", lookup_expr="in")
+    worklog_log_date = filters.CharFilter(method="filter_worklog_log_date")
+    worklog_log_date__range = filters.CharFilter(method="filter_worklog_log_date_range")
 
     class Meta:
         model = Issue
@@ -263,4 +270,38 @@ class IssueFilterSet(BaseFilterSet):
         return Q(
             issue_subscribers__subscriber_id__in=value,
             issue_subscribers__deleted_at__isnull=True,
+        )
+
+    def filter_worklog_log_date(self, queryset, name, value):
+        if not can_use_project_issue_worklog_date_filter(self.request):
+            return Q()
+
+        exact_date = parse_worklog_log_date_exact(value)
+        if not exact_date:
+            return Q(pk__in=[])
+
+        project_ids = queryset.values("project_id")
+        return Q(
+            pk__in=IssueWorkLog.objects.filter(
+                issue__project_id__in=project_ids,
+                deleted_at__isnull=True,
+                log_date=exact_date,
+            ).values("issue_id")
+        )
+
+    def filter_worklog_log_date_range(self, queryset, name, value):
+        if not can_use_project_issue_worklog_date_filter(self.request):
+            return Q()
+
+        worklog_date_range = parse_worklog_log_date_range(value)
+        if not worklog_date_range:
+            return Q(pk__in=[])
+
+        project_ids = queryset.values("project_id")
+        return Q(
+            pk__in=IssueWorkLog.objects.filter(
+                issue__project_id__in=project_ids,
+                deleted_at__isnull=True,
+                log_date__range=worklog_date_range,
+            ).values("issue_id")
         )

@@ -86,7 +86,7 @@ function CustomMenu(props: ICustomMenuDropdownProps) {
     useCaptureForOutsideClick = false,
   } = props;
 
-  const [referenceElement, setReferenceElement] = React.useState<HTMLButtonElement | null>(null);
+  const [referenceElement, setReferenceElement] = React.useState<HTMLElement | null>(null);
   const [popperElement, setPopperElement] = React.useState<HTMLDivElement | null>(null);
   const [isOpen, setIsOpen] = React.useState(false);
   // refs
@@ -123,7 +123,7 @@ function CustomMenu(props: ICustomMenuDropdownProps) {
 
   const selectActiveItem = () => {
     const activeItem: HTMLElement | undefined | null = dropdownRef.current?.querySelector(
-      `[data-headlessui-state="active"] button`
+      `[data-headlessui-state="active"] [data-custom-menu-item]`
     );
     activeItem?.click();
   };
@@ -134,15 +134,29 @@ function CustomMenu(props: ICustomMenuDropdownProps) {
     if (closeOnSelect) closeDropdown();
   };
 
-  const handleMenuButtonClick = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-    e.stopPropagation();
-    e.preventDefault();
+  const toggleDropdown = () => {
+    if (disabled) return;
+
     if (isOpen) {
       closeDropdown();
     } else {
       openDropdown();
     }
     if (menuButtonOnClick) menuButtonOnClick();
+  };
+
+  const handleMenuButtonClick = (e: React.MouseEvent<HTMLElement, MouseEvent>) => {
+    e.stopPropagation();
+    e.preventDefault();
+    toggleDropdown();
+  };
+
+  const handleMenuButtonKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+
+    e.stopPropagation();
+    e.preventDefault();
+    toggleDropdown();
   };
 
   const handleMouseEnter = () => {
@@ -242,17 +256,20 @@ function CustomMenu(props: ICustomMenuDropdownProps) {
         <>
           {customButton ? (
             <Menu.Button as={React.Fragment}>
-              <button
+              <div
                 ref={setReferenceElement}
-                type="button"
                 onClick={handleMenuButtonClick}
+                onKeyDown={handleMenuButtonKeyDown}
                 className={customButtonClassName}
                 tabIndex={customButtonTabIndex}
-                disabled={disabled}
+                role="button"
+                aria-disabled={disabled}
                 aria-label={ariaLabel}
+                aria-haspopup="menu"
+                aria-expanded={isOpen}
               >
                 {customButton}
-              </button>
+              </div>
             </Menu.Button>
           ) : (
             <>
@@ -456,29 +473,43 @@ function MenuItem(props: ICustomMenuItemProps) {
   const { children, disabled = false, onClick, className } = props;
   const submenuContext = useSubMenu();
 
+  const handleSelect = (event: React.MouseEvent<HTMLDivElement> | React.KeyboardEvent<HTMLDivElement>, close: () => void) => {
+    if (disabled) return;
+
+    close();
+    onClick?.(event as unknown as React.MouseEvent<HTMLButtonElement>);
+    submenuContext?.closeSubmenu();
+  };
+
   return (
     <Menu.Item as="div" disabled={disabled}>
       {({ active, close }) => (
-        <button
-          type="button"
+        <div
+          data-custom-menu-item
+          role="menuitem"
+          tabIndex={disabled ? undefined : -1}
           className={cn(
             "w-full truncate rounded-sm px-1 py-1.5 text-left text-secondary select-none",
             {
               "bg-layer-transparent-hover": active && !disabled,
               "text-placeholder": disabled,
+              "cursor-pointer": !disabled,
+              "cursor-not-allowed": disabled,
             },
             className
           )}
           onClick={(e) => {
-            close();
-            onClick?.(e);
-            // Close submenu if this item is inside a submenu
-            submenuContext?.closeSubmenu();
+            handleSelect(e, close);
           }}
-          disabled={disabled}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              handleSelect(e, close);
+            }
+          }}
         >
           {children}
-        </button>
+        </div>
       )}
     </Menu.Item>
   );

@@ -4,6 +4,7 @@
  * See the LICENSE file for details.
  */
 
+import React, { forwardRef, useImperativeHandle, useRef } from "react";
 import { observer } from "mobx-react";
 // plane types
 import { PriorityIcon, StateGroupIcon, WorkItemsIcon } from "@plane/propel/icons";
@@ -25,11 +26,12 @@ import { IssueIdentifier } from "@/plane-web/components/issues/issue-details/iss
 
 type BlockProps = {
   activity: TActivityEntityData;
-  ref: React.RefObject<HTMLDivElement>;
   workspaceSlug: string;
 };
-export const RecentIssue = observer(function RecentIssue(props: BlockProps) {
-  const { activity, ref, workspaceSlug } = props;
+
+const RecentIssueBase = forwardRef<HTMLDivElement, BlockProps>(function RecentIssue(props, ref) {
+  const { activity, workspaceSlug } = props;
+  const itemRef = useRef<HTMLDivElement>(null);
   // hooks
   const { getStateById } = useProjectState();
   const { setPeekIssue } = useIssueDetail();
@@ -38,6 +40,8 @@ export const RecentIssue = observer(function RecentIssue(props: BlockProps) {
   // derived values
   const issueDetails: TIssueEntityData = activity.entity_data as TIssueEntityData;
   const projectIdentifier = getProjectIdentifierById(issueDetails?.project_id);
+
+  useImperativeHandle(ref, () => itemRef.current!);
 
   if (!issueDetails) return <></>;
 
@@ -134,7 +138,7 @@ export const RecentIssue = observer(function RecentIssue(props: BlockProps) {
           )}
         </div>
       }
-      parentRef={ref}
+      parentRef={itemRef}
       disableLink={false}
       className="my-auto border-none !px-2 py-3"
       itemClassName="my-auto"
@@ -143,3 +147,7 @@ export const RecentIssue = observer(function RecentIssue(props: BlockProps) {
     />
   );
 });
+
+RecentIssueBase.displayName = "RecentIssue";
+
+export const RecentIssue = observer(RecentIssueBase);

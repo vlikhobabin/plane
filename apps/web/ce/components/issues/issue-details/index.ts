@@ -4,10 +4,10 @@
  * See the LICENSE file for details.
  */
 
-export * from "./issue-identifier";
-export * from "./issue-properties-activity";
-export * from "./issue-type-switcher";
-export * from "./issue-type-activity";
-export * from "./parent-select-root";
-export * from "./issue-creator";
-export * from "./additional-activity-root";
+export { IssueIdentifier, IssueTypeIdentifier } from "./issue-identifier";
+export { IssueAdditionalPropertiesActivity } from "./issue-properties-activity";
+export { IssueTypeSwitcher } from "./issue-type-switcher";
+export { IssueTypeActivity } from "./issue-type-activity";
+export { IssueParentSelectRoot } from "./parent-select-root";
+export { IssueCreatorDisplay } from "./issue-creator";
+export { AdditionalActivityRoot } from "./additional-activity-root";

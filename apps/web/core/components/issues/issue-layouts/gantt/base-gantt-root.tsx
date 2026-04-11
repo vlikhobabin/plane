@@ -27,6 +27,7 @@ import { useTimeLineChart } from "@/hooks/use-timeline-chart";
 // plane web hooks
 import { useBulkOperationStatus } from "@/plane-web/hooks/use-bulk-operation-status";
 
+import { logIssueLayoutFetchError } from "../fetch.utils";
 import { IssueLayoutHOC } from "../issue-layout-HOC";
 import { GanttQuickAddIssueButton, QuickAddIssueRoot } from "../quick-add";
 import { IssueGanttBlock } from "./blocks";
@@ -65,7 +66,9 @@ export const BaseGanttRoot = observer(function BaseGanttRoot(props: IBaseGanttRo
   targetDate.setDate(targetDate.getDate() + 1);
 
   useEffect(() => {
-    fetchIssues("init-loader", { canGroup: false, perPageCount: 100 }, viewId);
+    void fetchIssues("init-loader", { canGroup: false, perPageCount: 100 }, viewId).catch((error) => {
+      logIssueLayoutFetchError("gantt", error);
+    });
   }, [fetchIssues, storeType, viewId]);
 
   useEffect(() => {

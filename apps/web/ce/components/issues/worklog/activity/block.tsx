@@ -234,7 +234,7 @@ export function IssueActivityWorklogBlock(props: TIssueActivityWorklogBlock) {
         {canManageWorklogs && (
           <Button
             variant="secondary"
-            size="md"
+            size="base"
             onClick={() => {
               setEditingWorklogId(null);
               setCreateFormState(getDefaultFormState());
@@ -289,10 +289,10 @@ export function IssueActivityWorklogBlock(props: TIssueActivityWorklogBlock) {
                     />
                   </div>
                   <div className="flex items-center justify-end gap-2">
-                    <Button variant="secondary" size="md" onClick={cancelEdit} disabled={isBusy}>
+                    <Button variant="secondary" size="base" onClick={cancelEdit} disabled={isBusy}>
                       Отмена
                     </Button>
-                    <Button variant="primary" size="md" onClick={() => handleUpdate(entry.id)} disabled={isBusy}>
+                    <Button variant="primary" size="base" onClick={() => handleUpdate(entry.id)} disabled={isBusy}>
                       {isBusy ? "Сохранение..." : "Сохранить"}
                     </Button>
                   </div>
@@ -372,10 +372,15 @@ export function IssueActivityWorklogBlock(props: TIssueActivityWorklogBlock) {
                 />
               </div>
               <div className="flex items-center justify-end gap-2">
-                <Button variant="secondary" size="md" onClick={() => setIsComposerOpen(false)} disabled={isSubmitting}>
+                <Button
+                  variant="secondary"
+                  size="base"
+                  onClick={() => setIsComposerOpen(false)}
+                  disabled={isSubmitting}
+                >
                   Отмена
                 </Button>
-                <Button variant="primary" size="md" onClick={handleCreate} disabled={isSubmitting}>
+                <Button variant="primary" size="base" onClick={handleCreate} disabled={isSubmitting}>
                   {isSubmitting ? "Сохранение..." : "Сохранить"}
                 </Button>
               </div>

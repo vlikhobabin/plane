@@ -26,6 +26,7 @@ import { useIssuesActions } from "@/hooks/use-issues-actions";
 // ui
 // types
 import { DeleteIssueModal } from "../../delete-issue-modal";
+import { logIssueLayoutFetchError } from "../fetch.utils";
 import { IssueLayoutHOC } from "../issue-layout-HOC";
 import type { IQuickActionProps, TRenderQuickActions } from "../list/list-view-types";
 //components
@@ -96,7 +97,11 @@ export const BaseKanBanRoot = observer(function BaseKanBanRoot(props: IBaseKanBa
   const orderBy = displayFilters?.order_by;
 
   useEffect(() => {
-    fetchIssues("init-loader", { canGroup: true, perPageCount: sub_group_by ? 10 : 30 }, viewId);
+    void fetchIssues("init-loader", { canGroup: true, perPageCount: sub_group_by ? 10 : 30 }, viewId).catch(
+      (error) => {
+        logIssueLayoutFetchError("kanban", error);
+      }
+    );
   }, [fetchIssues, storeType, group_by, sub_group_by, viewId]);
 
   const fetchMoreIssues = useCallback(

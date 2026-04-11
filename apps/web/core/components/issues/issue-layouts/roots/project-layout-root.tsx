@@ -8,7 +8,7 @@ import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import useSWR from "swr";
 // plane constants
-import { ISSUE_DISPLAY_FILTERS_BY_PAGE, PROJECT_VIEW_TRACKER_ELEMENTS } from "@plane/constants";
+import { ISSUE_DISPLAY_FILTERS_BY_PAGE, PROJECT_LEVEL_ISSUE_FILTERS, PROJECT_VIEW_TRACKER_ELEMENTS } from "@plane/constants";
 import { EIssueLayoutTypes, EIssuesStoreType } from "@plane/types";
 import { Spinner } from "@plane/ui";
 // components
@@ -70,7 +70,7 @@ export const ProjectLayoutRoot = observer(function ProjectLayoutRoot() {
         enableSaveView
         entityType={EIssuesStoreType.PROJECT}
         entityId={projectId}
-        filtersToShowByLayout={ISSUE_DISPLAY_FILTERS_BY_PAGE.issues.filters}
+        filtersToShowByLayout={PROJECT_LEVEL_ISSUE_FILTERS}
         initialWorkItemFilters={workItemFilters}
         updateFilters={issuesFilter?.updateFilterExpression.bind(issuesFilter, workspaceSlug, projectId)}
         projectId={projectId}

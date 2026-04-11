@@ -45,7 +45,7 @@ export function CustomSearchSelect(props: ICustomSearchSelectProps) {
   } = props;
   const [query, setQuery] = useState("");
 
-  const [referenceElement, setReferenceElement] = useState<HTMLButtonElement | null>(null);
+  const [referenceElement, setReferenceElement] = useState<HTMLElement | null>(null);
   const [popperElement, setPopperElement] = useState<HTMLDivElement | null>(null);
   const [isOpen, setIsOpen] = useState(defaultOpen);
   // refs
@@ -85,6 +85,13 @@ export function CustomSearchSelect(props: ICustomSearchSelectProps) {
     else openDropdown();
   };
 
+  const handleCustomButtonKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+
+    e.preventDefault();
+    toggleDropdown();
+  };
+
   return (
     <Combobox
       as="div"
@@ -101,9 +108,8 @@ export function CustomSearchSelect(props: ICustomSearchSelectProps) {
           <>
             {customButton ? (
               <Combobox.Button as={React.Fragment}>
-                <button
+                <div
                   ref={setReferenceElement}
-                  type="button"
                   className={cn(
                     "flex w-full items-center justify-between gap-1 text-11",
                     {
@@ -113,9 +119,15 @@ export function CustomSearchSelect(props: ICustomSearchSelectProps) {
                     customButtonClassName
                   )}
                   onClick={toggleDropdown}
+                  onKeyDown={handleCustomButtonKeyDown}
+                  role="button"
+                  tabIndex={disabled ? -1 : 0}
+                  aria-disabled={disabled}
+                  aria-haspopup="listbox"
+                  aria-expanded={isOpen}
                 >
                   {customButton}
-                </button>
+                </div>
               </Combobox.Button>
             ) : (
               <Combobox.Button as={React.Fragment}>

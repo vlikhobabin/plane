@@ -42,6 +42,7 @@ class IssueWorkLog(models.Model):
         indexes = [
             models.Index(fields=["issue"], name="ext_worklogs_issue_id"),
             models.Index(fields=["user"], name="ext_worklogs_user_id"),
+            models.Index(fields=["issue", "log_date"], name="ext_worklogs_issue_log_date"),
         ]
 
     def __str__(self):

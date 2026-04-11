@@ -4,6 +4,7 @@
  * See the LICENSE file for details.
  */
 
+import React, { forwardRef, useImperativeHandle, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Logo } from "@plane/propel/emoji-icon-picker";
 import { PageIcon } from "@plane/propel/icons";
@@ -17,18 +18,20 @@ import { useMember } from "@/hooks/store/use-member";
 
 type BlockProps = {
   activity: TActivityEntityData;
-  ref: React.RefObject<HTMLDivElement>;
   workspaceSlug: string;
 };
 
-export function RecentPage(props: BlockProps) {
-  const { activity, ref, workspaceSlug } = props;
+export const RecentPage = forwardRef<HTMLDivElement, BlockProps>(function RecentPage(props, ref) {
+  const { activity, workspaceSlug } = props;
+  const itemRef = useRef<HTMLDivElement>(null);
   // router
   const router = useRouter();
   // store hooks
   const { getUserDetails } = useMember();
   // derived values
   const pageDetails = activity.entity_data as TPageEntityData;
+
+  useImperativeHandle(ref, () => itemRef.current!);
 
   if (!pageDetails) return <></>;
 
@@ -68,7 +71,7 @@ export function RecentPage(props: BlockProps) {
           <Avatar src={getFileURL(ownerDetails?.avatar_url ?? "")} name={ownerDetails?.display_name} />
         </div>
       }
-      parentRef={ref}
+      parentRef={itemRef}
       disableLink={false}
       className="my-auto border-none !px-2 py-3"
       itemClassName="my-auto bg-layer-transparent"
@@ -79,4 +82,4 @@ export function RecentPage(props: BlockProps) {
       }}
     />
   );
-}
+});

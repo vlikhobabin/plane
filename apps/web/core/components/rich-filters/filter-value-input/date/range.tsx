@@ -8,10 +8,11 @@ import React from "react";
 import { observer } from "mobx-react";
 // plane imports
 import type { TDateRangeFilterFieldConfig, TFilterConditionNodeForDisplay, TFilterProperty } from "@plane/types";
-import { cn, isValidDate, renderFormattedPayloadDate, toFilterArray } from "@plane/utils";
+import { cn, renderFormattedPayloadDate } from "@plane/utils";
 // components
 import { DateRangeDropdown } from "@/components/dropdowns/date-range";
 // local imports
+import { parseStoredDateRangeValue } from "./range.utils";
 import { COMMON_FILTER_ITEM_BORDER_CLASSNAME, EMPTY_FILTER_PLACEHOLDER_TEXT } from "../../shared";
 
 type TDateRangeFilterValueInputProps<P extends TFilterProperty> = {
@@ -26,9 +27,7 @@ export const DateRangeFilterValueInput = observer(function DateRangeFilterValueI
 ) {
   const { config, condition, isDisabled, onChange } = props;
   // derived values
-  const [fromRaw, toRaw] = toFilterArray(condition.value) ?? [];
-  const from = isValidDate(fromRaw) ? new Date(fromRaw) : undefined;
-  const to = isValidDate(toRaw) ? new Date(toRaw) : undefined;
+  const { from, to } = parseStoredDateRangeValue(condition.value);
   const isIncomplete = !from || !to;
 
   // Handler for date range selection

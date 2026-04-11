@@ -65,6 +65,10 @@ from plane.db.models import (
     UserRecentVisit,
 )
 from plane.utils.filters import ComplexFilterBackend, IssueFilterSet
+from plane.utils.filters.worklog import (
+    can_use_project_issue_worklog_date_filter,
+    get_active_worklog_log_date_range,
+)
 from plane.utils.global_paginator import paginate
 from plane.utils.grouper import (
     issue_group_values,
@@ -80,11 +84,21 @@ from plane.utils.timezone_converter import user_timezone_converter
 from .. import BaseAPIView, BaseViewSet
 
 
-def get_actual_hours_annotation():
+def get_request_worklog_log_date_range(request):
+    if not can_use_project_issue_worklog_date_filter(request):
+        return None
+
+    return get_active_worklog_log_date_range(request.query_params.get("filters"))
+
+
+def get_actual_hours_annotation(worklog_date_range=None):
+    worklog_queryset = IssueWorkLog.objects.filter(issue=OuterRef("id"), deleted_at__isnull=True)
+    if worklog_date_range:
+        worklog_queryset = worklog_queryset.filter(log_date__range=worklog_date_range)
+
     return Coalesce(
         Subquery(
-            IssueWorkLog.objects.filter(issue=OuterRef("id"))
-            .values("issue")
+            worklog_queryset.values("issue")
             .annotate(total_hours=Sum("hours"))
             .values("total_hours")[:1],
             output_field=FloatField(),
@@ -122,6 +136,8 @@ class IssueListEndpoint(BaseAPIView):
                 "assignees", "labels", "issue_module__module"
             )
 
+        worklog_date_range = get_request_worklog_log_date_range(request)
+
         # Add annotations
         issue_queryset = (
             issue_queryset.annotate(
@@ -150,7 +166,7 @@ class IssueListEndpoint(BaseAPIView):
                 .annotate(count=Func(F("id"), function="Count"))
                 .values("count")
             )
-            .annotate(actual_hours=get_actual_hours_annotation())
+            .annotate(actual_hours=get_actual_hours_annotation(worklog_date_range))
             .distinct()
         )
 
@@ -228,7 +244,7 @@ class IssueViewSet(BaseViewSet):
 
         return issues
 
-    def apply_annotations(self, issues):
+    def apply_annotations(self, issues, worklog_date_range=None):
         issues = (
             issues.annotate(
                 cycle_id=Subquery(
@@ -262,7 +278,7 @@ class IssueViewSet(BaseViewSet):
                     .values("count")
                 )
             )
-            .annotate(actual_hours=get_actual_hours_annotation())
+            .annotate(actual_hours=get_actual_hours_annotation(worklog_date_range))
         )
 
         return issues
@@ -273,6 +289,8 @@ class IssueViewSet(BaseViewSet):
         extra_filters = {}
         if request.GET.get("updated_at__gt", None) is not None:
             extra_filters = {"updated_at__gt": request.GET.get("updated_at__gt")}
+
+        worklog_date_range = get_request_worklog_log_date_range(request)
 
         project = Project.objects.get(pk=project_id, workspace__slug=slug)
         query_params = request.query_params.copy()
@@ -292,7 +310,7 @@ class IssueViewSet(BaseViewSet):
         filtered_issue_queryset = copy.deepcopy(issue_queryset)
 
         # Applying annotations to the issue queryset
-        issue_queryset = self.apply_annotations(issue_queryset)
+        issue_queryset = self.apply_annotations(issue_queryset, worklog_date_range=worklog_date_range)
 
         # Issue queryset
         issue_queryset, order_by_param = order_issue_queryset(

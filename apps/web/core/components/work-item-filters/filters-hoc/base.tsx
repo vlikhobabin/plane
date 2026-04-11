@@ -4,7 +4,7 @@
  * See the LICENSE file for details.
  */
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { observer } from "mobx-react";
 import { v4 as uuidv4 } from "uuid";
 // plane imports
@@ -61,7 +61,7 @@ const WorkItemFilterRoot = observer(function WorkItemFilterRoot(props: TWorkItem
     ...entityConfigProps
   } = props;
   // store hooks
-  const { getOrCreateFilter, deleteFilter } = useWorkItemFilters();
+  const { getFilter, getOrCreateFilter, deleteFilter } = useWorkItemFilters();
   // derived values
   const workItemEntityID = useMemo(
     () => (isTemporary ? `TEMP-${entityId ?? uuidv4()}` : entityId),
@@ -74,39 +74,54 @@ const WorkItemFilterRoot = observer(function WorkItemFilterRoot(props: TWorkItem
     ...entityConfigProps,
   });
   // get or create filter instance
-  const workItemLayoutFilter = useMemo(
-    () =>
-      getOrCreateFilter({
-        entityType,
-        entityId: workItemEntityID,
-        initialExpression: initialUserFilters,
-        onExpressionChange: updateFilters,
-        expressionOptions: {
-          saveViewOptions,
-          updateViewOptions,
-        },
-        showOnMount,
-      }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [entityType, workItemEntityID, saveViewOptions, updateViewOptions, updateFilters]
-  );
-
-  // delete filter instance when component unmounts
-  useEffect(
-    () => () => {
-      deleteFilter(entityType, workItemEntityID);
-    },
-    [deleteFilter, entityType, workItemEntityID]
+  const [workItemLayoutFilter, setWorkItemLayoutFilter] = useState<IWorkItemFilterInstance | undefined>(() =>
+    getFilter(entityType, workItemEntityID)
   );
 
   useEffect(() => {
+    const filter = getOrCreateFilter({
+      entityType,
+      entityId: workItemEntityID,
+      initialExpression: initialUserFilters,
+      onExpressionChange: updateFilters,
+      expressionOptions: {
+        saveViewOptions,
+        updateViewOptions,
+      },
+      showOnMount,
+    });
+
+    setWorkItemLayoutFilter(filter);
+
+    return () => {
+      deleteFilter(entityType, workItemEntityID);
+    };
+  }, [
+    deleteFilter,
+    entityType,
+    getOrCreateFilter,
+    initialUserFilters,
+    saveViewOptions,
+    showOnMount,
+    updateFilters,
+    updateViewOptions,
+    workItemEntityID,
+  ]);
+
+  useEffect(() => {
+    if (!workItemLayoutFilter) return;
+
     workItemLayoutFilter.configManager.setAreConfigsReady(workItemFiltersConfig.areAllConfigsInitialized);
     workItemLayoutFilter.configManager.registerAll(workItemFiltersConfig.configs);
   }, [
     workItemFiltersConfig.areAllConfigsInitialized,
     workItemFiltersConfig.configs,
-    workItemLayoutFilter.configManager,
+    workItemLayoutFilter,
   ]);
 
-  return <>{typeof children === "function" ? children({ filter: workItemLayoutFilter }) : children}</>;
+  if (typeof children === "function" && !workItemLayoutFilter) return null;
+
+  return (
+    <>{typeof children === "function" ? children({ filter: workItemLayoutFilter as IWorkItemFilterInstance }) : children}</>
+  );
 });

@@ -321,7 +321,9 @@ export class ProjectStore implements IProjectStore {
       return projectsResponse;
     } catch (error) {
       console.log("Failed to fetch project from workspace store");
-      this.loader = "loaded";
+      runInAction(() => {
+        this.loader = "loaded";
+      });
       throw error;
     }
   };
@@ -350,7 +352,9 @@ export class ProjectStore implements IProjectStore {
       return projectsResponse;
     } catch (error) {
       console.log("Failed to fetch project from workspace store");
-      this.loader = "loaded";
+      runInAction(() => {
+        this.loader = "loaded";
+      });
       throw error;
     }
   };

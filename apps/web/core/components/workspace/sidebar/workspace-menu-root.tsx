@@ -96,17 +96,10 @@ export const WorkspaceMenuRoot = observer(function WorkspaceMenuRoot(props: Work
                   "bg-layer-1": open,
                 })}
               >
-                <AppSidebarItem
-                  variant="button"
-                  item={{
-                    icon: (
-                      <WorkspaceLogo
-                        logo={activeWorkspace?.logo_url}
-                        name={activeWorkspace?.name}
-                        classNames="size-8 rounded-md border border-subtle"
-                      />
-                    ),
-                  }}
+                <WorkspaceLogo
+                  logo={activeWorkspace?.logo_url}
+                  name={activeWorkspace?.name}
+                  classNames="size-8 rounded-md border border-subtle"
                 />
               </Menu.Button>
             )}

@@ -4,7 +4,7 @@
  * See the LICENSE file for details.
  */
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { observer } from "mobx-react";
 import useSWR from "swr";
 import { useTranslation } from "@plane/i18n";
@@ -42,9 +42,6 @@ export const RecentActivityWidget = observer(function RecentActivityWidget(props
   // states
   const [filter, setFilter] = useState<TRecentActivityFilterKeys>(presetFilter ?? filters[0].name);
   const { t } = useTranslation();
-  // ref
-  const ref = useRef<HTMLDivElement>(null);
-
   const { data: recents, isLoading } = useSWR(
     workspaceSlug ? `WORKSPACE_RECENT_ACTIVITY_${workspaceSlug}_${filter}` : null,
     workspaceSlug
@@ -65,11 +62,11 @@ export const RecentActivityWidget = observer(function RecentActivityWidget(props
     switch (activity.entity_name) {
       case "page":
       case "workspace_page":
-        return <RecentPage activity={activity} ref={ref} workspaceSlug={workspaceSlug} />;
+        return <RecentPage activity={activity} workspaceSlug={workspaceSlug} />;
       case "project":
-        return <RecentProject activity={activity} ref={ref} workspaceSlug={workspaceSlug} />;
+        return <RecentProject activity={activity} workspaceSlug={workspaceSlug} />;
       case "issue":
-        return <RecentIssue activity={activity} ref={ref} workspaceSlug={workspaceSlug} />;
+        return <RecentIssue activity={activity} workspaceSlug={workspaceSlug} />;
       default:
         return <></>;
     }
@@ -77,7 +74,7 @@ export const RecentActivityWidget = observer(function RecentActivityWidget(props
 
   if (!isLoading && recents?.length === 0)
     return (
-      <div ref={ref} className="max-h-[500px] overflow-y-scroll">
+      <div className="max-h-[500px] overflow-y-scroll">
         <div className="mb-4 flex items-center justify-between">
           <div className="text-14 font-semibold text-tertiary">{t("home.recents.title")}</div>
           {showFilterSelect && <FiltersDropdown filters={filters} activeFilter={filter} setActiveFilter={setFilter} />}

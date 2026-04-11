@@ -475,6 +475,7 @@ export default {
   labels: "Метки",
   create_new_label: "Создать новую метку",
   start_date: "Дата начала",
+  fact_date: "Дата факта",
   end_date: "Дата окончания",
   due_date: "Срок выполнения",
   estimate: "Оценка",

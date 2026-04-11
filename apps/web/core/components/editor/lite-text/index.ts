@@ -4,5 +4,5 @@
  * See the LICENSE file for details.
  */
 
-export * from "./editor";
-export * from "./toolbar";
+export { LiteTextEditor } from "./editor";
+export { IssueCommentToolbar } from "./toolbar";

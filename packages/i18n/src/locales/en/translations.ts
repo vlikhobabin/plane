@@ -300,6 +300,7 @@ export default {
   labels: "Labels",
   create_new_label: "Create new label",
   start_date: "Start date",
+  fact_date: "Fact date",
   end_date: "End date",
   due_date: "Due date",
   estimate: "Estimate",

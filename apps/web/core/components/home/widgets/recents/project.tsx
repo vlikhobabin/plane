@@ -4,6 +4,7 @@
  * See the LICENSE file for details.
  */
 
+import React, { forwardRef, useImperativeHandle, useRef } from "react";
 import { useRouter } from "next/navigation";
 // plane types
 import { Logo } from "@plane/propel/emoji-icon-picker";
@@ -16,15 +17,18 @@ import { MemberDropdown } from "@/components/dropdowns/member/dropdown";
 
 type BlockProps = {
   activity: TActivityEntityData;
-  ref: React.RefObject<HTMLDivElement>;
   workspaceSlug: string;
 };
-export function RecentProject(props: BlockProps) {
-  const { activity, ref, workspaceSlug } = props;
+
+export const RecentProject = forwardRef<HTMLDivElement, BlockProps>(function RecentProject(props, ref) {
+  const { activity, workspaceSlug } = props;
+  const itemRef = useRef<HTMLDivElement>(null);
   // router
   const router = useRouter();
   // derived values
   const projectDetails: TProjectEntityData = activity.entity_data as TProjectEntityData;
+
+  useImperativeHandle(ref, () => itemRef.current!);
 
   if (!projectDetails) return <></>;
 
@@ -71,7 +75,7 @@ export function RecentProject(props: BlockProps) {
           )}
         </div>
       }
-      parentRef={ref}
+      parentRef={itemRef}
       disableLink={false}
       className="my-auto border-none !px-2 py-3"
       itemClassName="my-auto"
@@ -82,4 +86,4 @@ export function RecentProject(props: BlockProps) {
       }}
     />
   );
-}
+});

@@ -61,21 +61,23 @@ export const TopNavigationRoot = observer(function TopNavigationRoot() {
       {/* Additional Actions */}
       <div className="flex flex-1 shrink-0 items-center justify-end gap-1">
         <Tooltip tooltipContent="Inbox" position="bottom">
-          <AppSidebarItem
-            variant="link"
-            item={{
-              href: `/${workspaceSlug?.toString()}/notifications/`,
-              icon: (
-                <div className="relative">
-                  <InboxIcon className="size-5" />
-                  {totalNotifications > 0 && (
-                    <span className="absolute top-0 right-0 size-2 rounded-full bg-danger-primary" />
-                  )}
-                </div>
-              ),
-              isActive: pathname?.includes("/notifications/"),
-            }}
-          />
+          <span className="inline-flex">
+            <AppSidebarItem
+              variant="link"
+              item={{
+                href: `/${workspaceSlug?.toString()}/notifications/`,
+                icon: (
+                  <div className="relative">
+                    <InboxIcon className="size-5" />
+                    {totalNotifications > 0 && (
+                      <span className="absolute top-0 right-0 size-2 rounded-full bg-danger-primary" />
+                    )}
+                  </div>
+                ),
+                isActive: pathname?.includes("/notifications/"),
+              }}
+            />
+          </span>
         </Tooltip>
         <HelpMenuRoot />
         <StarUsOnGitHubLink />

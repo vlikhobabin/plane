@@ -4,8 +4,40 @@
  * See the LICENSE file for details.
  */
 
-import sanitizeHtml from "sanitize-html";
 import type { Content, JSONContent } from "@plane/types";
+
+const ALLOWED_HTML_TAG_PLACEHOLDER = " __PLANE_ALLOWED_HTML_TAG__ ";
+
+const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const decodeHtmlEntities = (value: string) =>
+  value
+    .replace(/\u00A0/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&#(\d+);/g, (_match, codePoint) => String.fromCodePoint(Number(codePoint)))
+    .replace(/&#x([0-9a-f]+);/gi, (_match, codePoint) => String.fromCodePoint(parseInt(codePoint, 16)));
+
+const stripHtmlTags = (value: string) => value.replace(/<[^>]+>/g, " ");
+
+const normalizeStrippedHtml = (value: string) => decodeHtmlEntities(stripHtmlTags(value)).replace(/\s+/g, " ").trim();
+
+const preserveAllowedHtmlTags = (value: string, allowedHTMLTags: string[]) =>
+  allowedHTMLTags.reduce((html, tag) => {
+    const normalizedTag = escapeRegExp(tag.trim());
+    if (!normalizedTag) return html;
+
+    const pairedTagPattern = new RegExp(`<${normalizedTag}\\b[^>]*>[\\s\\S]*?<\\/${normalizedTag}>`, "gi");
+    const selfClosingTagPattern = new RegExp(`<${normalizedTag}\\b[^>]*\\/?>`, "gi");
+
+    return html
+      .replace(pairedTagPattern, ALLOWED_HTML_TAG_PLACEHOLDER)
+      .replace(selfClosingTagPattern, ALLOWED_HTML_TAG_PLACEHOLDER);
+  }, value);
 
 /**
  * @description Adds space between camelCase words
@@ -126,8 +158,7 @@ const text = stripHTML(html);
 console.log(text); // Some text
  */
 export const sanitizeHTML = (htmlString: string) => {
-  const sanitizedText = sanitizeHtml(htmlString, { allowedTags: [] }); // sanitize the string to remove all HTML tags
-  return sanitizedText.trim(); // trim the string to remove leading and trailing whitespaces
+  return normalizeStrippedHtml(htmlString);
 };
 
 /**
@@ -161,10 +192,8 @@ export const checkEmailValidity = (email: string): boolean => {
 };
 
 export const isEmptyHtmlString = (htmlString: string, allowedHTMLTags: string[] = []) => {
-  // Remove HTML tags using sanitize-html
-  const cleanText = sanitizeHtml(htmlString, { allowedTags: allowedHTMLTags });
-  // Trim the string and check if it's empty
-  return cleanText.trim() === "";
+  const normalizedHtmlString = preserveAllowedHtmlTags(htmlString, allowedHTMLTags);
+  return normalizeStrippedHtml(normalizedHtmlString) === "";
 };
 
 /**

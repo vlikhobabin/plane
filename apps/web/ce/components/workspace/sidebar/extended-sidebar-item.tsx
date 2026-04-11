@@ -49,7 +49,7 @@ export const ExtendedSidebarItem = observer(function ExtendedSidebarItem(props: 
   const [instruction, setInstruction] = useState<"DRAG_OVER" | "DRAG_BELOW" | undefined>(undefined);
   // refs
   const navigationIemRef = useRef<HTMLDivElement | null>(null);
-  const dragHandleRef = useRef<HTMLButtonElement | null>(null);
+  const dragHandleRef = useRef<HTMLDivElement | null>(null);
 
   // nextjs hooks
   const pathname = usePathname();
@@ -176,8 +176,7 @@ export const ExtendedSidebarItem = observer(function ExtendedSidebarItem(props: 
             position="top-start"
             disabled={isDragging}
           >
-            <button
-              type="button"
+            <div
               className={cn(
                 "absolute top-1/2 -left-3 flex -translate-y-1/2 cursor-grab items-center justify-center rounded text-placeholder opacity-0 group-hover/project-item:opacity-100",
                 {
@@ -188,7 +187,7 @@ export const ExtendedSidebarItem = observer(function ExtendedSidebarItem(props: 
               ref={dragHandleRef}
             >
               <DragHandle className="bg-transparent" />
-            </button>
+            </div>
           </Tooltip>
         )}
         <SidebarNavItem isActive={isActive}>

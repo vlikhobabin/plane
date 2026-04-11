@@ -26,6 +26,11 @@ import { useProjectView } from "@/hooks/store/use-project-view";
 import { useUser, useUserPermissions } from "@/hooks/store/user";
 // local imports
 import { WorkItemFiltersHOC } from "./base";
+import {
+  canUseProjectWorklogDateFilter,
+  sanitizeProjectLevelInitialWorkItemFilters,
+  WORKLOG_LOG_DATE_FILTER_PROPERTY,
+} from "./project-level.utils";
 import type { TEnableSaveViewProps, TEnableUpdateViewProps, TSharedWorkItemFiltersHOCProps } from "./shared";
 
 type TProjectLevelWorkItemFiltersHOCProps = TSharedWorkItemFiltersHOCProps & {
@@ -95,6 +100,18 @@ export const ProjectLevelWorkItemFiltersHOC = observer(function ProjectLevelWork
   );
   const createViewLabel = useMemo(() => props.saveViewOptions?.label, [props.saveViewOptions?.label]);
   const updateViewLabel = useMemo(() => props.updateViewOptions?.label, [props.updateViewOptions?.label]);
+  const canUseWorklogDateFilter = useMemo(
+    () => canUseProjectWorklogDateFilter(hasProjectMemberLevelPermissions, projectDetails?.is_time_tracking_enabled),
+    [hasProjectMemberLevelPermissions, projectDetails]
+  );
+  const isWorklogDateFilterAllowed = useMemo(
+    () => canUseWorklogDateFilter && props.filtersToShowByLayout?.includes(WORKLOG_LOG_DATE_FILTER_PROPERTY) === true,
+    [canUseWorklogDateFilter, props.filtersToShowByLayout]
+  );
+  const sanitizedInitialWorkItemFilters = useMemo(
+    () => sanitizeProjectLevelInitialWorkItemFilters(initialWorkItemFilters, isWorklogDateFilterAllowed),
+    [initialWorkItemFilters, isWorklogDateFilterAllowed]
+  );
   const hasAdditionalChanges = useMemo(
     () =>
       !isEqual(initialWorkItemFilters?.displayFilters, viewDetails?.display_filters) ||
@@ -201,12 +218,14 @@ export const ProjectLevelWorkItemFiltersHOC = observer(function ProjectLevelWork
       />
       <WorkItemFiltersHOC
         {...props}
+        canReadWorklogs={canUseWorklogDateFilter}
         workspaceSlug={workspaceSlug}
         cycleIds={getProjectCycleIds(projectId) ?? undefined}
         labelIds={getProjectLabelIds(projectId)}
         memberIds={getProjectMemberIds(projectId, false) ?? undefined}
         moduleIds={getProjectModuleIds(projectId) ?? undefined}
         stateIds={getProjectStateIds(projectId)}
+        initialWorkItemFilters={sanitizedInitialWorkItemFilters}
         saveViewOptions={saveViewOptions}
         updateViewOptions={updateViewOptions}
       >

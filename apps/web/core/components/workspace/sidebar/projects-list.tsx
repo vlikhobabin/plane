@@ -41,6 +41,16 @@ export const SidebarProjectsList = observer(function SidebarProjectsList() {
   const [isScrolled, setIsScrolled] = useState(false); // scroll animation state
   // refs
   const containerRef = useRef<HTMLDivElement | null>(null);
+
+  const getScrollViewport = () =>
+    containerRef.current?.closest("[data-slot='scroll-area-viewport']") as HTMLDivElement | null;
+
+  const isScrollableViewport = (element: HTMLDivElement) => {
+    if (typeof window === "undefined") return false;
+
+    const { overflowY } = window.getComputedStyle(element);
+    return ["auto", "scroll", "overlay"].includes(overflowY) && element.scrollHeight > element.clientHeight;
+  };
   // store hooks
   const { t } = useTranslation();
   const { toggleCreateProjectModal } = useCommandPalette();
@@ -113,35 +123,50 @@ export const SidebarProjectsList = observer(function SidebarProjectsList() {
    */
   useEffect(() => {
     const handleScroll = () => {
-      if (containerRef.current) {
-        const scrollTop = containerRef.current.scrollTop;
+      const scrollViewport = getScrollViewport();
+
+      if (scrollViewport) {
+        const scrollTop = scrollViewport.scrollTop;
         setIsScrolled(scrollTop > 0);
       }
     };
-    const currentContainerRef = containerRef.current;
-    if (currentContainerRef) {
-      currentContainerRef.addEventListener("scroll", handleScroll);
+    const scrollViewport = getScrollViewport();
+
+    if (scrollViewport) {
+      handleScroll();
+      scrollViewport.addEventListener("scroll", handleScroll);
     }
+
     return () => {
-      if (currentContainerRef) {
-        currentContainerRef.removeEventListener("scroll", handleScroll);
+      if (scrollViewport) {
+        scrollViewport.removeEventListener("scroll", handleScroll);
       }
     };
-  }, [containerRef]);
+  }, []);
 
   useEffect(() => {
-    const element = containerRef.current;
+    let cleanup: (() => void) | undefined;
+    let frameId = 0;
 
-    if (!element) return;
+    frameId = window.requestAnimationFrame(() => {
+      const element = getScrollViewport();
 
-    return combine(
-      autoScrollForElements({
-        element,
-        canScroll: ({ source }) => source?.data?.dragInstanceId === "PROJECTS",
-        getAllowedAxis: () => "vertical",
-      })
-    );
-  }, [containerRef]);
+      if (!element || !isScrollableViewport(element)) return;
+
+      cleanup = combine(
+        autoScrollForElements({
+          element,
+          canScroll: ({ source }) => source?.data?.dragInstanceId === "PROJECTS",
+          getAllowedAxis: () => "vertical",
+        })
+      );
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      cleanup?.();
+    };
+  }, [joinedProjects.length, isAllProjectsListOpen]);
 
   const toggleListDisclosure = (isOpen: boolean) => {
     setIsAllProjectsListOpen(isOpen);

@@ -98,6 +98,7 @@ export const WORK_ITEM_FILTER_PROPERTY_KEYS = [
   "priority",
   "start_date",
   "target_date",
+  "worklog_log_date",
   "assignee_id",
   "mention_id",
   "created_by_id",

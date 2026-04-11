@@ -7,6 +7,7 @@
 import { useCallback, useMemo } from "react";
 import { AtSign, Briefcase } from "lucide-react";
 // plane imports
+import { useTranslation } from "@plane/i18n";
 import { Logo } from "@plane/propel/emoji-icon-picker";
 import {
   CalendarLayoutIcon,
@@ -22,6 +23,7 @@ import {
   DueDatePropertyIcon,
   UserCirclePropertyIcon,
   PriorityPropertyIcon,
+  TimelineLayoutIcon,
 } from "@plane/propel/icons";
 import type {
   ICycle,
@@ -51,6 +53,7 @@ import {
   getSubscriberFilterConfig,
   getTargetDateFilterConfig,
   getUpdatedAtFilterConfig,
+  getWorklogDateFilterConfig,
   isLoaderReady,
 } from "@plane/utils";
 // store hooks
@@ -64,6 +67,7 @@ import { useProjectState } from "@/hooks/store/use-project-state";
 import { useFiltersOperatorConfigs } from "@/plane-web/hooks/rich-filters/use-filters-operator-configs";
 
 export type TWorkItemFiltersEntityProps = {
+  canReadWorklogs?: boolean;
   workspaceSlug: string;
   cycleIds?: string[];
   labelIds?: string[];
@@ -89,8 +93,18 @@ export type TWorkItemFiltersConfig = {
 };
 
 export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps): TWorkItemFiltersConfig => {
-  const { allowedFilters, cycleIds, labelIds, memberIds, moduleIds, projectId, projectIds, stateIds, workspaceSlug } =
-    props;
+  const {
+    allowedFilters,
+    canReadWorklogs = false,
+    cycleIds,
+    labelIds,
+    memberIds,
+    moduleIds,
+    projectId,
+    projectIds,
+    stateIds,
+    workspaceSlug,
+  } = props;
   // store hooks
   const { loader: projectLoader, getProjectById } = useProject();
   const { getCycleById } = useCycle();
@@ -98,6 +112,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
   const { getModuleById } = useModule();
   const { getStateById } = useProjectState();
   const { getUserDetails } = useMember();
+  const { t } = useTranslation();
   // derived values
   const operatorConfigs = useFiltersOperatorConfigs({ workspaceSlug });
   const filtersToShow = useMemo(() => new Set(allowedFilters), [allowedFilters]);
@@ -349,6 +364,19 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
     [operatorConfigs]
   );
 
+  // worklog date filter config
+  const worklogDateFilterConfig = useMemo(
+    () => ({
+      ...getWorklogDateFilterConfig<TWorkItemFilterProperty>("worklog_log_date")({
+        isEnabled: isFilterEnabled("worklog_log_date") && canReadWorklogs && project?.is_time_tracking_enabled === true,
+        filterIcon: TimelineLayoutIcon,
+        ...operatorConfigs,
+      }),
+      label: t("fact_date"),
+    }),
+    [canReadWorklogs, isFilterEnabled, operatorConfigs, project?.is_time_tracking_enabled, t]
+  );
+
   // project filter config
   const projectFilterConfig = useMemo(
     () =>
@@ -378,6 +406,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
       targetDateFilterConfig,
       createdAtFilterConfig,
       updatedAtFilterConfig,
+      worklogDateFilterConfig,
       createdByFilterConfig,
       subscriberFilterConfig,
     ],
@@ -397,6 +426,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
       target_date: targetDateFilterConfig,
       created_at: createdAtFilterConfig,
       updated_at: updatedAtFilterConfig,
+      worklog_log_date: worklogDateFilterConfig,
     },
     isFilterEnabled,
     members: members ?? [],

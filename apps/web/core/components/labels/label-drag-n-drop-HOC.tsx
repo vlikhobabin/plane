@@ -47,7 +47,7 @@ type Props = {
   children: (
     isDragging: boolean,
     isDroppingInLabel: boolean,
-    dragHandleRef: MutableRefObject<HTMLButtonElement | null>
+    dragHandleRef: MutableRefObject<HTMLDivElement | null>
   ) => React.ReactNode;
   onDrop: (
     draggingLabelId: string,
@@ -64,7 +64,7 @@ export const LabelDndHOC = observer(function LabelDndHOC(props: Props) {
   const [instruction, setInstruction] = useState<InstructionType | undefined>(undefined);
   // refs
   const labelRef = useRef<HTMLDivElement | null>(null);
-  const dragHandleRef = useRef<HTMLButtonElement | null>(null);
+  const dragHandleRef = useRef<HTMLDivElement | null>(null);
 
   const { allowPermissions } = useUserPermissions();
   const isEditable = allowPermissions([EUserPermissions.ADMIN], EUserPermissionsLevel.PROJECT);

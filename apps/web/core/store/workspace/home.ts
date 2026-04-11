@@ -96,7 +96,9 @@ export class HomeStore implements IHomeStore {
       });
     } catch (error) {
       console.error("Failed to fetch widgets");
-      this.loading = false;
+      runInAction(() => {
+        this.loading = false;
+      });
       throw error;
     }
   };
