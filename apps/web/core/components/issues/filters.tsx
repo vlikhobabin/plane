@@ -55,11 +55,11 @@ export const HeaderFilters = observer(function HeaderFilters(props: Props) {
   // states
   const [analyticsModal, setAnalyticsModal] = useState(false);
   // store hooks
-  const {
-    issuesFilter: { issueFilters, updateFilters },
-  } = useIssues(storeType);
+  const { issuesFilter } = useIssues(storeType);
+  const { issueFilters, updateFilters } = issuesFilter;
+  const scopedIssueFilters = projectId ? issuesFilter.getIssueFilters(projectId) : issueFilters;
   // derived values
-  const activeLayout = issueFilters?.displayFilters?.layout;
+  const activeLayout = scopedIssueFilters?.displayFilters?.layout;
   const layoutDisplayFiltersOptions = ISSUE_STORE_TO_FILTERS_MAP[storeType]?.layoutOptions[activeLayout];
 
   const handleLayoutChange = useCallback(
@@ -116,9 +116,9 @@ export const HeaderFilters = observer(function HeaderFilters(props: Props) {
       >
         <DisplayFiltersSelection
           layoutDisplayFiltersOptions={layoutDisplayFiltersOptions}
-          displayFilters={issueFilters?.displayFilters ?? {}}
+          displayFilters={scopedIssueFilters?.displayFilters ?? {}}
           handleDisplayFiltersUpdate={handleDisplayFilters}
-          displayProperties={issueFilters?.displayProperties ?? {}}
+          displayProperties={scopedIssueFilters?.displayProperties ?? {}}
           handleDisplayPropertiesUpdate={handleDisplayProperties}
           cycleViewDisabled={!currentProjectDetails?.cycle_view}
           moduleViewDisabled={!currentProjectDetails?.module_view}

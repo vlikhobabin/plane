@@ -54,38 +54,25 @@ export function FiltersDropdown(props: Props) {
                 {menuButton}
               </button>
             ) : (
-              <div ref={setReferenceElement}>
-                <div className="hidden @4xl:flex">
-                  <Button
-                    disabled={disabled}
-                    variant="secondary"
-                    prependIcon={icon}
-                    tabIndex={tabIndex}
-                    className="relative"
-                    size="lg"
-                  >
-                    <>
-                      <div className={`${open ? "text-primary" : "text-secondary"}`}>
-                        <span>{title}</span>
-                      </div>
-                      {isFiltersApplied && (
-                        <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-accent-primary" />
-                      )}
-                    </>
-                  </Button>
-                </div>
-                <div className="flex @4xl:hidden">
-                  <Button
-                    disabled={disabled}
-                    ref={setReferenceElement}
-                    variant="secondary"
-                    tabIndex={tabIndex}
-                    size="lg"
-                  >
-                    {miniIcon || title}
-                  </Button>
-                </div>
-              </div>
+              <Button
+                disabled={disabled}
+                ref={setReferenceElement}
+                variant="secondary"
+                prependIcon={icon ? React.cloneElement(icon, { className: "hidden @4xl:flex" }) : undefined}
+                tabIndex={tabIndex}
+                className="relative"
+                size="lg"
+              >
+                <>
+                  <div className={`hidden @4xl:flex ${open ? "text-primary" : "text-secondary"}`}>
+                    <span>{title}</span>
+                  </div>
+                  <div className="flex @4xl:hidden">{miniIcon || title}</div>
+                  {isFiltersApplied && (
+                    <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-accent-primary" />
+                  )}
+                </>
+              </Button>
             )}
           </Popover.Button>
           <Transition

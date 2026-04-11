@@ -10,14 +10,15 @@ import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // plane imports
 import { ALL_ISSUES, EIssueFilterType, EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
-import type { EIssuesStoreType, IIssueDisplayFilterOptions } from "@plane/types";
-import { EIssueLayoutTypes } from "@plane/types";
+import type { IIssueDisplayFilterOptions } from "@plane/types";
+import { EIssueLayoutTypes, EIssuesStoreType } from "@plane/types";
 // hooks
 import { useIssues } from "@/hooks/store/use-issues";
 import { useUserPermissions } from "@/hooks/store/user";
 import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
 import { useIssuesActions } from "@/hooks/use-issues-actions";
 // local imports
+import { logIssueLayoutFetchError } from "../fetch.utils";
 import { IssueLayoutHOC } from "../issue-layout-HOC";
 import type { IQuickActionProps, TRenderQuickActions } from "../list/list-view-types";
 import { SpreadsheetView } from "./spreadsheet-view";
@@ -42,7 +43,8 @@ interface IBaseSpreadsheetRoot {
 export const BaseSpreadsheetRoot = observer(function BaseSpreadsheetRoot(props: IBaseSpreadsheetRoot) {
   const { QuickActions, canEditPropertiesBasedOnProject, isCompletedCycle = false, viewId, isEpic = false } = props;
   // router
-  const { projectId } = useParams();
+  const { projectId: paramProjectId } = useParams();
+  const routeProjectId = paramProjectId?.toString();
   // store hooks
   const storeType = useIssueStoreType() as SpreadsheetStoreType;
   const { allowPermissions } = useUserPermissions();
@@ -58,6 +60,10 @@ export const BaseSpreadsheetRoot = observer(function BaseSpreadsheetRoot(props: 
     restoreIssue,
     updateFilters,
   } = useIssuesActions(storeType);
+  const issueFilters =
+    storeType === EIssuesStoreType.PROJECT && routeProjectId
+      ? issuesFilter.getIssueFilters(routeProjectId)
+      : issuesFilter.issueFilters;
   // derived values
   const { enableInlineEditing, enableQuickAdd, enableIssueCreation } = issues?.viewFlags || {};
   // user role validation
@@ -67,13 +73,17 @@ export const BaseSpreadsheetRoot = observer(function BaseSpreadsheetRoot(props: 
   );
 
   useEffect(() => {
-    fetchIssues("init-loader", { canGroup: false, perPageCount: 100 }, viewId);
+    void fetchIssues("init-loader", { canGroup: false, perPageCount: 100 }, viewId).catch((error) => {
+      logIssueLayoutFetchError("spreadsheet", error);
+    });
   }, [fetchIssues, storeType, viewId]);
 
   const canEditProperties = useCallback(
-    (projectId: string | undefined) => {
+    (issueProjectId: string | undefined) => {
       const isEditingAllowedBasedOnProject =
-        canEditPropertiesBasedOnProject && projectId ? canEditPropertiesBasedOnProject(projectId) : isEditingAllowed;
+        canEditPropertiesBasedOnProject && issueProjectId
+          ? canEditPropertiesBasedOnProject(issueProjectId)
+          : isEditingAllowed;
 
       return enableInlineEditing && isEditingAllowedBasedOnProject;
     },
@@ -85,11 +95,11 @@ export const BaseSpreadsheetRoot = observer(function BaseSpreadsheetRoot(props: 
 
   const handleDisplayFiltersUpdate = useCallback(
     (updatedDisplayFilter: Partial<IIssueDisplayFilterOptions>) => {
-      updateFilters(projectId?.toString() ?? "", EIssueFilterType.DISPLAY_FILTERS, {
+      updateFilters(paramProjectId?.toString() ?? "", EIssueFilterType.DISPLAY_FILTERS, {
         ...updatedDisplayFilter,
       });
     },
-    [projectId, updateFilters]
+    [paramProjectId, updateFilters]
   );
 
   const renderQuickActions: TRenderQuickActions = useCallback(
@@ -108,7 +118,16 @@ export const BaseSpreadsheetRoot = observer(function BaseSpreadsheetRoot(props: 
         placements={placement}
       />
     ),
-    [isCompletedCycle, canEditProperties, removeIssue, updateIssue, removeIssueFromView, archiveIssue, restoreIssue]
+    [
+      QuickActions,
+      isCompletedCycle,
+      canEditProperties,
+      removeIssue,
+      updateIssue,
+      removeIssueFromView,
+      archiveIssue,
+      restoreIssue,
+    ]
   );
 
   if (!Array.isArray(issueIds)) return null;
@@ -116,8 +135,8 @@ export const BaseSpreadsheetRoot = observer(function BaseSpreadsheetRoot(props: 
   return (
     <IssueLayoutHOC layout={EIssueLayoutTypes.SPREADSHEET}>
       <SpreadsheetView
-        displayProperties={issuesFilter.issueFilters?.displayProperties ?? {}}
-        displayFilters={issuesFilter.issueFilters?.displayFilters ?? {}}
+        displayProperties={issueFilters?.displayProperties ?? {}}
+        displayFilters={issueFilters?.displayFilters ?? {}}
         handleDisplayFilterUpdate={handleDisplayFiltersUpdate}
         issueIds={issueIds}
         quickActions={renderQuickActions}

@@ -116,6 +116,14 @@ make dev-live
 
 For the individual frontend targets, the `Makefile` first builds the required workspace packages and then starts the selected app directly. This is the recommended path for day-to-day work because it avoids the flaky behavior we saw from running multiple separate `turbo dev` sessions that share `packages/*/dist`.
 
+For a production-like frontend build without a long-lived dev server:
+
+```bash
+make build-web-static
+```
+
+This writes static assets to `apps/web/build/client`.
+
 You can override ports when the host already uses Plane's defaults:
 
 ```bash
@@ -133,6 +141,14 @@ Default local URLs:
 - Admin: `http://127.0.0.1:3001`
 - Space: `http://127.0.0.1:3002`
 - Live: `http://127.0.0.1:3100`
+
+## Reverse Proxy And Shared Environments
+
+`make dev-web` starts `react-router dev`. Use it for local interactive development only.
+
+If you need to put Plane behind a shared reverse proxy or expose it on a staging hostname, build static assets with `make build-web-static` and serve `apps/web/build/client` from nginx or another web server instead of proxying requests to the dev server.
+
+Do not expose `react-router dev` publicly. Dynamic route-module imports, `@fs` paths, and hot-reload behavior are much more likely to fail under restarts, network interruptions, or memory pressure than the static build output.
 
 ## Notes
 

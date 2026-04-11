@@ -21,7 +21,7 @@ LIVE_PORT ?= 3100
 .PHONY: help dev-env dev-bootstrap dev-bootstrap-python dev-bootstrap-node \
 	infra-up infra-down infra-logs dev-migrate dev-instance-bootstrap \
 	dev-api dev-worker dev-beat dev-web dev-admin dev-space dev-live \
-	dev-frontends
+	dev-frontends build-web-static
 
 help:
 	@printf '%s\n' 'Available targets:'
@@ -39,6 +39,7 @@ help:
 	@printf '  %-24s %s\n' 'dev-beat' 'Run Celery beat with local settings'
 	@printf '  %-24s %s\n' 'dev-frontends' 'Run all frontend dev servers via turbo on default ports'
 	@printf '  %-24s %s\n' 'dev-web' 'Prebuild deps and run web frontend on $(DEV_HOST):$(WEB_PORT)'
+	@printf '  %-24s %s\n' 'build-web-static' 'Build static web frontend artifacts without starting a dev server'
 	@printf '  %-24s %s\n' 'dev-admin' 'Prebuild deps and run admin frontend on $(DEV_HOST):$(ADMIN_PORT)'
 	@printf '  %-24s %s\n' 'dev-space' 'Prebuild deps and run space frontend on $(DEV_HOST):$(SPACE_PORT)'
 	@printf '  %-24s %s\n' 'dev-live' 'Prebuild deps and run live server on $(DEV_HOST):$(LIVE_PORT)'
@@ -122,6 +123,9 @@ dev-beat:
 
 dev-frontends:
 	$(PNPM) dev
+
+build-web-static:
+	$(PNPM) turbo run build --filter=web... --concurrency=1
 
 dev-web:
 	$(PNPM) turbo run build --filter=web...
